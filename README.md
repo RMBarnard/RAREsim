@@ -2,7 +2,7 @@
 Python Interface for Scalable rare-variant simulations.
 
 
-To Install:  
+##To Install:  
   $ Clone git ..  <br/>
   $ cd Path to raresim/    <br/>
   $ python3 setup.py install <br/>
