@@ -41,6 +41,6 @@ make
 ```
 gunzip test/data/Simulated_80k_9.controls.haps.gz
 ./read \
-    ../test/data/Simulated_80k_9.controls.haps \
-    Simulated_80k_9.controls.haps.dat \
+    -i ../test/data/Simulated_80k_9.controls.haps \
+    -o Simulated_80k_9.controls.haps.dat \
 ```
