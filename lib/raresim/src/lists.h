@@ -4,6 +4,8 @@
 #include <stdint.h>
 
 double rand_double();
+void reservoir_sample(uint32_t max, uint32_t N, uint32_t *R);
+int uint32_t_compare( const void* a , const void* b );
 
 // UINT32 ARRAY
 struct uint32_t_array
@@ -55,7 +57,7 @@ uint32_t uint32_t_sparse_martix_not_Null(struct uint32_t_sparse_matrix *m,
 
 uint32_t uint32_t_sparse_martix_prune_row(struct uint32_t_sparse_matrix *m,
                                           uint32_t row,
-                                          double p_of_rem);
+                                          uint32_t num_prune);
 
 struct uint32_t_sparse_matrix *read_matrix(char *file_name);
 

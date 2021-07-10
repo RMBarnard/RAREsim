@@ -7,6 +7,8 @@
 #include <sysexits.h>
 #include <string.h>
 #include <inttypes.h>
+#include <time.h>
+
 
 #include "lists.h"
 
@@ -18,6 +20,33 @@
 double rand_double()
 {
     return (double)rand() / (double)RAND_MAX ;
+}
+
+void reservoir_sample(uint32_t max, uint32_t N, uint32_t *R)
+{
+
+    uint32_t i;
+    for (i = 0; i < N; i++)
+        R[i] = i;
+
+    for (i = N + 1; i < max; i++) {
+        uint32_t j = rand() % i;
+        if ( j < N )
+            R[j] = i;
+    }
+}
+
+int uint32_t_compare( const void* a , const void* b )
+{
+    const uint32_t ai = *( const uint32_t* )a;
+    const uint32_t bi = *( const uint32_t* )b;
+
+    if( ai < bi )
+        return -1;
+    else if( ai > bi )
+        return 1;
+    else
+        return 0;
 }
 
 //{{{ uint32_t_array
@@ -367,6 +396,8 @@ uint32_t uint32_t_sparse_martix_num_rows(struct uint32_t_sparse_matrix *m)
     return m->rows;
 }
 //}}}
+
+//{{{uint32_t uint32_t_sparse_martix_not_Null(struct uint32_t_sparse_matrix *m,
 uint32_t uint32_t_sparse_martix_not_Null(struct uint32_t_sparse_matrix *m,
                                           uint32_t row)
 {
@@ -375,27 +406,34 @@ uint32_t uint32_t_sparse_martix_not_Null(struct uint32_t_sparse_matrix *m,
     else
         return 1;   //true
 }
+//}}}
+
 //{{{uint32_t uint32_t_sparse_martix_prune_row(struct uint32_t_sparse_matrix *m,
 uint32_t uint32_t_sparse_martix_prune_row(struct uint32_t_sparse_matrix *m,
                                           uint32_t row,
-                                          double p_of_rem)
+                                          uint32_t num_prune)
 {
+    srand(time(NULL));
     if ((row > m->rows) || (m->data[row] == NULL) || (m->data[row]->num==0 ))
         return 0;
 
-
     struct uint32_t_array *ua = m->data[row];
 
-    uint32_t i, n_i = 0, num = ua->num;
-    for (i = 0; i < num; ++i) {
-        double flip = rand_double();
-        if (flip >= p_of_rem) {
-            ua->data[n_i] = ua->data[i];
-            n_i += 1;
-        }
+    uint32_t num_keep = ua->num - num_prune;
+
+    uint32_t *keep_idxs = (uint32_t *) malloc( num_keep * sizeof(uint32_t) );
+    reservoir_sample(ua->num - 1, num_keep, keep_idxs);
+    uint32_t i;
+    qsort(keep_idxs, num_keep, sizeof(uint32_t), uint32_t_compare);
+
+    for (i = 0; i < num_keep; ++i) {
+        ua->data[i] = ua->data[keep_idxs[i]];
     }
 
-    ua->num = n_i;
+    ua->num = num_keep;
+
+    free(keep_idxs);
+
     return ua->num;
 }
 //}}}

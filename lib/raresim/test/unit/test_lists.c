@@ -13,6 +13,20 @@
 void setUp(void) { }
 void tearDown(void) { }
 
+//{{{void test_sampling(void)
+void test_sampling(void)
+{
+    uint32_t *R = (uint32_t *) malloc(10 * sizeof(uint32_t));
+    reservoir_sample(100, 10, R);
+
+    uint32_t i;
+    for (i = 0; i < 10; i++) {
+        TEST_ASSERT_TRUE(R[i] <= 100);
+    }
+    free(R);
+}
+//}}}
+
 //{{{void test_uint32_t_array(void)
 void test_uint32_t_array(void)
 {
@@ -139,11 +153,19 @@ void test_uint32_t_sparse_matrix(void)
     TEST_ASSERT_EQUAL(14, m->rows);
 
     uint32_t old_row_num = m->data[13]->num;
-    ret = uint32_t_sparse_martix_prune_row(m, 13, 0.0);
+    ret = uint32_t_sparse_martix_prune_row(m, 13, 0);
     TEST_ASSERT_EQUAL(old_row_num, ret);
 
-    ret = uint32_t_sparse_martix_prune_row(m, 13, 0.75);
-    TEST_ASSERT_TRUE(old_row_num > ret);
+    ret = uint32_t_sparse_martix_prune_row(m, 13, 3);
+    TEST_ASSERT_EQUAL(old_row_num - 3, ret);
+
+    ret = uint32_t_sparse_martix_prune_row(m, 13, 3);
+    TEST_ASSERT_EQUAL(old_row_num - 3 - 3, ret);
+
+    uint32_t i;
+    for (i=0;i<old_row_num - 3 - 3;++i)
+        printf("%d\n", m->data[13]->data[i]);
+
 
     uint32_t_sparse_matrix_destroy(&m);
     uint32_t_sparse_matrix_destroy(&m1);
