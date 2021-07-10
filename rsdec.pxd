@@ -44,7 +44,7 @@ cdef extern from "lib/raresim/src/lists.h":
 
     size_t uint32_t_sparse_martix_not_Null(uint32_t_sparse_matrix *m, size_t row)
 
-    size_t uint32_t_sparse_martix_prune_row(uint32_t_sparse_matrix *m,size_t row,uint32_t num_prune)
+    size_t uint32_t_sparse_martix_prune_row(uint32_t_sparse_matrix *m,size_t row,size_t num_prune)
 
     uint32_t_sparse_matrix *read_matrix(char *file_name)
 

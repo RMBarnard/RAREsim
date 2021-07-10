@@ -75,7 +75,7 @@ int main(int argc, char **argv)
                 uint32_t_sparse_martix_remove_row(m, i);
                 removed += 1;
             } else if (flip <=0.6) { // prune row
-                uint32_t_sparse_martix_prune_row(m, i, 1);
+                uint32_t_sparse_martix_prune_row(m, i, 75);
                 pruned += 1;
             }
         }

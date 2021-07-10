@@ -415,14 +415,15 @@ uint32_t uint32_t_sparse_martix_prune_row(struct uint32_t_sparse_matrix *m,
 {
     srand(time(NULL));
     if ((row > m->rows) || (m->data[row] == NULL) || (m->data[row]->num==0 ))
-        return 0;
+      return 0;
 
     struct uint32_t_array *ua = m->data[row];
-
+    if(num_prune > ua->num)
+      return 0;
     uint32_t num_keep = ua->num - num_prune;
 
     uint32_t *keep_idxs = (uint32_t *) malloc( num_keep * sizeof(uint32_t) );
-    reservoir_sample(ua->num - 1, num_keep, keep_idxs);
+    reservoir_sample(ua->num-1 , num_keep, keep_idxs);
     uint32_t i;
     qsort(keep_idxs, num_keep, sizeof(uint32_t), uint32_t_compare);
 
