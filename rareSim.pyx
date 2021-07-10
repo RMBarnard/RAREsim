@@ -47,8 +47,8 @@ cdef class sparse:
 
     def remove_row(self, row)->void:
         rsdec.uint32_t_sparse_martix_remove_row( self.sparse32,  row);
-    def prune_row(self , row, p_of_rem) -> int:
-        return rsdec.uint32_t_sparse_martix_prune_row( self.sparse32, row, p_of_rem)
+    def prune_row(self , row, num_prune) -> int:
+        return rsdec.uint32_t_sparse_martix_prune_row( self.sparse32, row, num_prune)
 
     def read(self, byte_filename):
         cdef char* c_filename = byte_filename
