@@ -21,7 +21,7 @@ if __name__ == '__main__':
 			if flip<= 0.3:
 				M.remove_row(row)
 			elif flip <= 0.6:
-				M.prune_row(row, 0.5)
+				M.prune_row(row, 23)
 
 	M.write('out.haps.dat')
   ```
