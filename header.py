@@ -203,9 +203,7 @@ def verify_legend(legend, legend_header, M, split, probs):
                  'that specifies "fun" or "syn" for each site')
     
     if M.num_rows() != len(legend):
-        # TODO: This check has a bug in it somewhere. Likely in the C code
-        # raise DifferingLengths(f"Lengths of legend {len(legend)} and hap {M.num_rows()} files do not match")
-        print(f"WARNING: Lengths of legend {len(legend)} and hap {M.num_rows()} files do not match")
+        raise DifferingLengths(f"Lengths of legend {len(legend)} and hap {M.num_rows()} files do not match")
 
     if probs and 'prob' not in legend_header:
         raise MissingProbs('The legend file needs to have a "prob" column ' + \
@@ -334,11 +332,12 @@ def get_all_kept_rows(bin_h, R, func_split, fun_only, syn_only, z, keep_protecte
             all_kept_rows += bin_h[bin_id]
 
     all_kept_rows.sort()
+    R = sorted([item for sublist in R.values() for item in sublist])
     if z:
-        all_kept_rows = list(merge(all_kept_rows, sorted(R)))
+        all_kept_rows = list(merge(all_kept_rows, R))
     if keep_protected:
         keep_rows = []
-        for row_id in sorted(R):
+        for row_id in R:
             if int(legend[row_id]["protected"]) == 1:
                 keep_rows.append(row_id)
         all_kept_rows = list(merge(all_kept_rows, keep_rows))
