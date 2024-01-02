@@ -332,7 +332,11 @@ def get_all_kept_rows(bin_h, R, func_split, fun_only, syn_only, z, keep_protecte
             all_kept_rows += bin_h[bin_id]
 
     all_kept_rows.sort()
-    R = sorted([item for sublist in R.values() for item in sublist])
+
+    if isinstance(R, dict):
+        R = [item for sublist in R for item in sublist]
+    R = sorted(R)
+
     if z:
         all_kept_rows = list(merge(all_kept_rows, R))
     if keep_protected:
