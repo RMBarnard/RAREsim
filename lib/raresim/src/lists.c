@@ -270,9 +270,6 @@ uint32_t uint32_t_sparse_matrix_add(struct uint32_t_sparse_matrix *m,
         }
     }
 
-    if (m->rows < row + 1)
-        m->rows = row + 1;
-
     if (m->data[row] == NULL)
         m->data[row] = uint32_t_array_init(10);
 
@@ -636,6 +633,7 @@ uint32_t add_buffer_to_matrix(char *buffer,
             *col = 0;
             max_col = MAX(*col, max_col);
             *row += 1;
+            M->rows += 1;
             continue;
         }
 
