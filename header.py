@@ -334,7 +334,7 @@ def get_all_kept_rows(bin_h, R, func_split, fun_only, syn_only, z, keep_protecte
     all_kept_rows.sort()
 
     if isinstance(R, dict):
-        R = [item for sublist in R for item in sublist]
+        R = [item for sublist in R.values() for item in sublist]
     R = sorted(R)
 
     if z:
