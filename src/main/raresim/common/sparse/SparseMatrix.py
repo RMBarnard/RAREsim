@@ -1,4 +1,4 @@
-from src.main.raresimCommonLib.exceptions.RaresimException import RaresimException
+from src.main.raresim.common.exceptions.RaresimException import RaresimException
 import random
 
 
@@ -88,6 +88,16 @@ class SparseMatrix:
         temp = list(set(temp))
         self.__data[row] = temp
 
+    def remove(self, row: int, col: int) -> None:
+        """
+        Places a zero at the given position
+        @param row: row index
+        @param col: column index
+        @return: None
+        """
+        self.__data[row].remove(col)
+
+
     def add_row(self, val: list) -> None:
         """
         Sets row at given index to the provided list. Only to be used by SparseMatrixReader
@@ -123,7 +133,7 @@ class SparseMatrix:
         @param row: index of row
         @return: the number of 1s in the requested row
         """
-        if row > self._rows - 1:
+        if row > self.__rows - 1:
             raise RaresimException(f"Attempted to access row {row} but there were only{self.__rows} in the matrix")
         return len(self.__data[row])
 

@@ -1,7 +1,6 @@
-from rareSim import sparse
 import gzip
 import sys
-from header import *
+from src.main.raresim.engine.header import *
 
 
 def main():

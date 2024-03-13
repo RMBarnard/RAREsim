@@ -33,7 +33,7 @@ def get_args():
     parser.add_argument('-m',
                         dest='sparse_matrix',
                         required=True,
-                        help='Input sparse matrix path')
+                        help='Input sparse matrix path, can be a .haps, .sm, or .gz file')
 
     parser.add_argument('-b',
                         dest='exp_bins',
@@ -171,7 +171,7 @@ def read_expected(expected_file_name):
             if header == None:
                 header = A
             else:
-                bins.append( (int(A[0]), int(A[1]), float(A[2]) ) )
+                bins.append((int(A[0]), int(A[1]), float(A[2])))
 
     return bins
 

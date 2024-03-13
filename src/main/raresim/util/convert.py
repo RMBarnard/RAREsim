@@ -1,7 +1,5 @@
-from rareSim import sparse 
-import random
-import sys
 import argparse
+from src.main.raresim.common.sparse import *
 
 
 def get_args():
@@ -15,17 +13,19 @@ def get_args():
     parser.add_argument('-o',
                         dest='output_file',
                         required=True,
-                        help='Ouput sparse matrix path')
+                        help='Output sparse matrix path')
 
     args = parser.parse_args()
 
     return args
 
+
 def main():
     args = get_args()
-    M = sparse(args.input_file)
-    M.write(args.output_file)
+    reader = SparseMatrixReader()
+    writer = SparseMatrixWriter()
+    writer.writeToHapsFile(reader.loadSparseMatrix(args.input_file), args.output_file, "sm")
 
-if __name__ == '__main__': main()
 
-def convert():
+if __name__ == '__main__':
+    main()
