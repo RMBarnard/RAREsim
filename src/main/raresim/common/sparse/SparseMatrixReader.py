@@ -36,6 +36,7 @@ class SparseMatrixReader:
             data = f.read(4)
             matrix = SparseMatrix(int.from_bytes(data, "little"))
             row = []
+            data = f.read(4)
             while data:
                 if self.__toSigned32(int.from_bytes(data, "little")) ==-1:
                     matrix.add_row(row)

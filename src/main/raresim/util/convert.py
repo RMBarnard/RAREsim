@@ -24,7 +24,8 @@ def main():
     args = get_args()
     reader = SparseMatrixReader()
     writer = SparseMatrixWriter()
-    writer.writeToHapsFile(reader.loadSparseMatrix(args.input_file), args.output_file, "sm")
+    matrix = reader.loadSparseMatrix(args.input_file)
+    writer.writeToHapsFile(matrix, args.output_file, "sm")
 
 
 if __name__ == '__main__':
