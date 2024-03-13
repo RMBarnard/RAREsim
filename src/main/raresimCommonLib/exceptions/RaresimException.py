@@ -1,0 +1,2 @@
+class RaresimException(Exception):
+    pass
