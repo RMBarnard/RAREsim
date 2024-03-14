@@ -4,6 +4,7 @@ from src.main.raresim.engine import RunConfig
 from src.main.raresim.engine.transformers import *
 from src.main.raresim.common.exceptions import *
 from src.main.raresim.common import BinsReader
+import timeit
 
 
 class DefaultRunner:
@@ -38,7 +39,10 @@ class DefaultRunner:
 
         print()
         print('Writing new haplotype file', end='', flush=True)
+        start = timeit.default_timer()
         self.matrix_writer.writeToHapsFile(matrix, self.args.output_hap)
+        end = timeit.default_timer()
+        print(f"Took time: {end-start}")
 
     def get_bins(self):
         mode = self.runConfig.run_type

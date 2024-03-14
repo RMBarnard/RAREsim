@@ -1,5 +1,6 @@
 import argparse
 from src.main.raresim.common.sparse import *
+import timeit
 
 
 def get_args():
@@ -24,9 +25,16 @@ def main():
     args = get_args()
     reader = SparseMatrixReader()
     writer = SparseMatrixWriter()
-    matrix = reader.loadSparseMatrix(args.input_file)
-    writer.writeToHapsFile(matrix, args.output_file, "sm")
 
+    start = timeit.default_timer()
+    matrix = reader.loadSparseMatrix(args.input_file)
+    end = timeit.default_timer()
+    print(f"Time taken: {end-start}")
+
+    start = timeit.default_timer()
+    writer.writeToHapsFile(matrix, args.output_file)
+    end = timeit.default_timer()
+    print(f"Time taken: {end-start}")
 
 if __name__ == '__main__':
     main()
