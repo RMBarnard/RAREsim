@@ -1,5 +1,5 @@
 class Legend:
-    supported_columns = ["id", "position", "a0", "a1", "prob", "protected"]
+    supported_columns = ["id", "position", "a0", "a1", "prob", "protected", "fun"]
 
     def __init__(self, header: list):
         self.__header = header
