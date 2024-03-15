@@ -1,1 +1,2 @@
-Cython
+numpy~=1.21.6
+pip~=24.0
