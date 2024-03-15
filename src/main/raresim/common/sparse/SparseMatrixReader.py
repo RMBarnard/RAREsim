@@ -1,5 +1,8 @@
 import os
 import gzip
+import timeit
+import numpy as np
+
 from src.main.raresim.common.sparse import SparseMatrix
 from src.main.raresim.common.exceptions import IllegalArgumentException
 
@@ -20,15 +23,21 @@ class SparseMatrixReader:
     def __loadZipped(self, filepath: str) -> SparseMatrix:
         with gzip.open(filepath, "rt") as f:
             line = f.readline()
-            nums = line.split(" ")
+            nums = np.fromstring(line, dtype=int, sep=" ")
             matrix = SparseMatrix(len(nums))
             matrix.add_row(self.__getSparseRow(nums))
+
             while True:
                 line = f.readline()
+
                 if line is None or line.strip() == "\n" or line.strip() == '':
                     break
-                nums = line.split(" ")
-                matrix.add_row(self.__getSparseRow(nums))
+
+                nums = np.fromstring(line, dtype=int, sep=" ")
+
+                row_to_add = self.__getSparseRow(nums)
+
+                matrix.add_row(row_to_add)
         return matrix
 
     def __loadCompressed(self, filepath: str) -> SparseMatrix:
@@ -38,7 +47,7 @@ class SparseMatrixReader:
             row = []
             data = f.read(4)
             while data:
-                if self.__toSigned32(int.from_bytes(data, "little")) ==-1:
+                if self.__toSigned32(int.from_bytes(data, "little")) == -1:
                     matrix.add_row(row)
                     row = []
                 else:
@@ -49,23 +58,19 @@ class SparseMatrixReader:
     def __loadUncompressed(self, filepath: str) -> SparseMatrix:
         with open(filepath, "r") as f:
             line = f.readline()
-            nums = line.split(" ")
+            nums = np.fromstring(line, dtype=int, sep=" ")
             matrix = SparseMatrix(len(nums))
             matrix.add_row(self.__getSparseRow(nums))
             while True:
                 line = f.readline()
                 if line is None or line.strip() == "\n" or line.strip() == '':
                     break
-                nums = line.split(" ")
+                nums = np.fromstring(line, dtype=int, sep=" ")
                 matrix.add_row(self.__getSparseRow(nums))
         return matrix
 
-    def __getSparseRow(self, nums: list) -> list:
-        ret = []
-        for i in range(len(nums)):
-            if nums[i] == "1":
-                ret.append(i)
-        return ret
+    def __getSparseRow(self, nums: np.ndarray) -> list:
+        return np.where(nums == 1)[0]
 
     def __toSigned32(self, n):
         n = n & 0xffffffff

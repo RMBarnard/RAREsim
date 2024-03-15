@@ -18,6 +18,12 @@ class SparseMatrixWriter:
             self.__writeUncompressed(sparseMatrix, filename)
 
     def __writeZipped(self, sparseMatrix: SparseMatrix, filename: str):
+        """
+        Writes the sparse matrix to a g-zipped format. Unzipping will yield a human-readable file
+        @param sparseMatrix: input matrix
+        @param filename: output file
+        @return: None
+        """
         with gzip.open(filename, "wb") as f:
             print(sparseMatrix.num_rows())
             start = timeit.default_timer()
@@ -32,6 +38,12 @@ class SparseMatrixWriter:
                     start = timeit.default_timer()
 
     def __writeUncompressed(self, sparseMatrix: SparseMatrix, filename: str):
+        """
+        Writes the sparse matrix to an uncompressed human-readable format
+        @param sparseMatrix: input matrix
+        @param filename: output file
+        @return: None
+        """
         with open(filename, "w") as f:
             for i in range(sparseMatrix.num_rows()):
                 row = sparseMatrix.get_row(i)
@@ -40,9 +52,20 @@ class SparseMatrixWriter:
                 f.write(line)
 
     def __writeCompressed(self, sparseMatrix: SparseMatrix, filename: str):
+        """
+        Writes the sparse matrix to a binary encoded file. Values of -1 (0xFFFFFFFF) are considered row delimiters.
+        @param sparseMatrix: input matrix
+        @param filename: output file
+        @return: None
+        """
         with open(filename, "wb") as f:
             f.write(int.to_bytes(sparseMatrix.num_cols(), 4, "little"))
-            for i in range(sparseMatrix.num_rows()):
+            for i in range(sparseMatrix.num_rows())[:-1]:
                 row = sparseMatrix.get_row_raw(i)
                 data = array.array("i", row + [-1])
                 f.write(data.tobytes())
+            # Write the last row outside of the loop to avoid appending an extra delimiter at the end.
+            # If there were an extra delimiter it would read it in as a row of all zeros in the reader and throw off
+            # the row count of the matrix
+            last_row = array.array("i", sparseMatrix.get_row_raw(sparseMatrix.num_rows()-1))
+            f.write(last_row.tobytes())

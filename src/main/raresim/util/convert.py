@@ -32,7 +32,7 @@ def main():
     print(f"Time taken: {end-start}")
 
     start = timeit.default_timer()
-    writer.writeToHapsFile(matrix, args.output_file)
+    writer.writeToHapsFile(matrix, args.output_file, "sm")
     end = timeit.default_timer()
     print(f"Time taken: {end-start}")
 
