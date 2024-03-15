@@ -68,7 +68,7 @@ class SparseMatrix:
         @param row: index of row to get
         @return: list of the indicies of the ones in a row
         """
-        return self.__data[row]
+        return self.__data[row].tolist()
 
     def add(self, row: int, col: int) -> None:
         """

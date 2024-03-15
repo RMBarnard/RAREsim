@@ -60,12 +60,12 @@ class SparseMatrixWriter:
         """
         with open(filename, "wb") as f:
             f.write(int.to_bytes(sparseMatrix.num_cols(), 4, "little"))
-            for i in range(sparseMatrix.num_rows())[:-1]:
+            for i in range(sparseMatrix.num_rows()):
                 row = sparseMatrix.get_row_raw(i)
                 data = array.array("i", row + [-1])
                 f.write(data.tobytes())
-            # Write the last row outside of the loop to avoid appending an extra delimiter at the end.
-            # If there were an extra delimiter it would read it in as a row of all zeros in the reader and throw off
-            # the row count of the matrix
-            last_row = array.array("i", sparseMatrix.get_row_raw(sparseMatrix.num_rows()-1))
-            f.write(last_row.tobytes())
+            # # Write the last row outside of the loop to avoid appending an extra delimiter at the end.
+            # # If there were an extra delimiter it would read it in as a row of all zeros in the reader and throw off
+            # # the row count of the matrix
+            # last_row = array.array("i", sparseMatrix.get_row_raw(sparseMatrix.num_rows()-1))
+            # f.write(last_row.tobytes())

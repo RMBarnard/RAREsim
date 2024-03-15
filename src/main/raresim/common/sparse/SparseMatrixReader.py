@@ -41,6 +41,7 @@ class SparseMatrixReader:
         return matrix
 
     def __loadCompressed(self, filepath: str) -> SparseMatrix:
+        timer = timeit.default_timer()
         with open(filepath, "rb") as f:
             data = f.read(4)
             matrix = SparseMatrix(int.from_bytes(data, "little"))
@@ -48,11 +49,12 @@ class SparseMatrixReader:
             data = f.read(4)
             while data:
                 if self.__toSigned32(int.from_bytes(data, "little")) == -1:
-                    matrix.add_row(row)
+                    matrix.add_row(np.fromiter(row, dtype=int))
                     row = []
                 else:
                     row.append(int.from_bytes(data, "little"))
                 data = f.read(4)
+        print(f"Read file in {timeit.default_timer() - timer}")
         return matrix
 
     def __loadUncompressed(self, filepath: str) -> SparseMatrix:
