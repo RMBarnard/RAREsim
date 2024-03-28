@@ -1,4 +1,4 @@
-__all__ = ['AbstractTransformer', 'FunctionalSplitTransformer', 'ProbabilisticTransformer', 'StandardTransformer']
+__all__ = ['FunctionalSplitTransformer', 'ProbabilisticTransformer', 'DefaultTransformer']
 
 from inspect import isclass
 from pkgutil import iter_modules

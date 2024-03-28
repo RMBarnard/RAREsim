@@ -19,7 +19,6 @@ class RunConfig:
             elif args.syn_bins_only is not None:
                 return "syn_only"
             else:
-                return
                 raise IllegalArgumentException('If variants are split by functional/synonymous ' +
                                                'files must be provided for --functional_bins ' +
                                                'and --synonymous_bins')

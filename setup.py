@@ -11,6 +11,6 @@ setup(
         'numpy',
     ],
     entry_points={
-        'console_scripts': ['raresim=raresim.cli.tester:main'],
+        'console_scripts': ['raresim=raresim.cli.cli:main'],
     },
 )

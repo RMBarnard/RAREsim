@@ -42,12 +42,12 @@ class DefaultRunner:
         start = timeit.default_timer()
         self.matrix_writer.writeToHapsFile(matrix, self.args.output_hap)
         end = timeit.default_timer()
-        print(f"Took time: {end-start}")
+        print(f"Took time: {end - start}")
 
     def get_bins(self):
         mode = self.runConfig.run_type
         bins = None
-        if mode =="func_split":
+        if mode == "func_split":
             bins = {}
             bins['fun'] = self.bins_reader.loadBins(self.args.exp_fun_bins)
             bins['syn'] = self.bins_reader.loadBins(self.args.exp_syn_bins)
@@ -63,7 +63,7 @@ class DefaultRunner:
         mode = self.runConfig.run_type
         print(f"Running with run mode: {mode}")
         if mode == "standard":
-            return StandardTransformer(self.runConfig)
+            return DefaultTransformer(self.runConfig)
         if mode == "func_split":
             return FunctionalSplitTransformer(self.runConfig, ["fun", "syn"])
         if mode == "fun_only":
@@ -72,4 +72,3 @@ class DefaultRunner:
             return FunctionalSplitTransformer(self.runConfig, ["syn"])
         if mode == "probabilistic":
             return ProbabilisticTransformer(self.runConfig)
-

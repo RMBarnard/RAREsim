@@ -6,7 +6,7 @@ from importlib import import_module
 import os
 
 # iterate through the modules in the current package
-package_dir = os.path.join(os.path.abspath(__file__), os.pardir)
+package_dir = os.path.join(os.path.abspath(__file__))
 for (_, module_name, _) in iter_modules([package_dir]):
 
     # import the module and iterate through its attributes

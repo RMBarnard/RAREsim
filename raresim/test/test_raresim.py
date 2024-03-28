@@ -1,35 +1,33 @@
 import unittest
-from rareSim import sparse
-from header import *
 import random
 
 class testRaresim(unittest.TestCase):
     
     def test_readExpected(self):
-        bins = read_expected('./testData/testBins.txt')
+        bins = read_expected('./data/testBins.txt')
         self.assertEqual(bins[2], (3,5,2))
 
     def test_getBin(self):
-        bins = read_expected('./testData/testBins.txt')
+        bins = read_expected('./data/testBins.txt')
         self.assertEqual(get_bin(bins, 4), 2)
 
     def test_rowNum(self):
         M = sparse(None)
-        M.load('./testData/test.haps.sm')
+        M.load('./data/test.haps.sm')
         self.assertEqual(M.row_num(0), 3)
         self.assertEqual(M.row_num(1), 0)
         self.assertEqual(M.row_num(8), 1)
 
     def test_read_legend(self):
-        legend_header, legend = read_legend('./testData/test.legend')
+        legend_header, legend = read_legend('./data/test.legend')
         self.assertEqual(legend_header, ['id','position','a0','a1'])
         self.assertEqual(legend[0], {'id':'19:14492336_A_G', 'position':'1', 'a0':'A', 'a1':'G'})
 
     def test_assign_bins(self):
-        legend_header, legend = read_legend('./testData/test.legend')
+        legend_header, legend = read_legend('./data/test.legend')
         M = sparse(None)
-        M.load('./testData/test.haps.sm')
-        bins = read_expected('./testData/testBins.txt')
+        M.load('./data/test.haps.sm')
+        bins = read_expected('./data/testBins.txt')
 
         bin_h = assign_bins(M, bins, legend, False, False, False, False)
         correct_assignment = {
@@ -41,8 +39,8 @@ class testRaresim(unittest.TestCase):
 
     def test_verify_legend(self):
         M = sparse(None)
-        M.load('./testData/test.haps.sm')
-        legend_header, legend = read_legend('./testData/test.nomatch.legend')
+        M.load('./data/test.haps.sm')
+        legend_header, legend = read_legend('./data/test.nomatch.legend')
         with self.assertRaises(Exception):
             verify_legend(legend, legend_header, M, False)
         with self.assertRaises(Exception):
@@ -50,9 +48,9 @@ class testRaresim(unittest.TestCase):
 
     def test_prune_bins(self):
         M = sparse(None)
-        M.load('./testData/test.haps.sm')
-        legend_header, legend = read_legend('./testData/test.legend')
-        bins = read_expected('./testData/testBins.txt')
+        M.load('./data/test.haps.sm')
+        legend_header, legend = read_legend('./data/test.legend')
+        bins = read_expected('./data/testBins.txt')
         random.seed(123)
         bin_h = bin_h = assign_bins(M, bins, legend, False, False, False, False)
         prune_bins(bin_h, bins, [], M)
