@@ -70,7 +70,7 @@ def get_args():
     
     parser.add_argument('-z',
                         action='store_true',
-                        help='Rows of zeros are not removed')
+                        help='Rows of zeros are removed from input haps file')
 
     parser.add_argument('-prob',
                         action='store_true',
@@ -212,10 +212,8 @@ def verify_legend(legend, legend_header, M, split, probs):
 
 
 
-def assign_bins(M, bins, legend, func_split, fun_only, syn_only, z):
+def assign_bins(M, bins, legend, func_split, fun_only, syn_only):
     bin_h = {}
-
-    func_split,fun_only,syn_only
 
     if func_split or fun_only or syn_only:
         bin_h['fun'] = {}
@@ -225,7 +223,7 @@ def assign_bins(M, bins, legend, func_split, fun_only, syn_only, z):
     for row in range( M.num_rows()):
         row_num = M.row_num(row)
 
-        if row_num > 0 or z:
+        if row_num > 0:
             if func_split:
                 bin_id = get_bin(bins[legend[row_i]['fun']], row_num)
             else:
@@ -312,7 +310,7 @@ def print_frequency_distribution(bins, bin_h, func_split, fun_only, syn_only):
         print_bin(bin_h, bins)
 
 
-def get_all_kept_rows(bin_h, R, func_split, fun_only, syn_only, z, keep_protected, legend):
+def get_all_kept_rows(bin_h, R, func_split, fun_only, syn_only, keep_protected, legend):
     all_kept_rows = []
 
     if func_split:
@@ -337,8 +335,6 @@ def get_all_kept_rows(bin_h, R, func_split, fun_only, syn_only, z, keep_protecte
         R = [item for sublist in R.values() for item in sublist]
     R = sorted(R)
 
-    if z:
-        all_kept_rows = list(merge(all_kept_rows, R))
     if keep_protected:
         keep_rows = []
         for row_id in R:

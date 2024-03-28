@@ -58,13 +58,18 @@ def main():
                     i+=1
 
     else:
+        rows_of_zeros = []
 
         if args.input_legend is None or args.output_legend is None:
             sys.exit("Legend files not provided")
 
+        for i in range(M.num_rows()):
+            if M.row_num() == 0:
+                rows_of_zeros.append(i)
+
         bins = get_expected_bins(args, func_split, fun_only, syn_only)
 
-        bin_h = assign_bins(M, bins, legend, func_split, fun_only, syn_only, args.z)
+        bin_h = assign_bins(M, bins, legend, func_split, fun_only, syn_only)
         print('Input allele frequency distribution:')
         print_frequency_distribution(bins, bin_h, func_split, fun_only, syn_only)
         R = []
@@ -87,8 +92,13 @@ def main():
         print('New allele frequency distribution:')
         print_frequency_distribution(bins, bin_h, func_split, fun_only, syn_only)
 
-        all_kept_rows = get_all_kept_rows(bin_h, R, func_split, fun_only, syn_only, args.z, args.keep_protected, legend)
-        
+        all_kept_rows = get_all_kept_rows(bin_h, R, func_split, fun_only, syn_only, args.keep_protected, legend)
+        if not args.z:
+            all_kept_rows = [x for x in range(M.num_rows())]
+
+        rows_of_zeros = set(rows_of_zeros)
+        all_kept_rows = [x for x in all_kept_rows if x not in rows_of_zeros]
+
         print()
         print('Writing new variant legend')
         write_legend(all_kept_rows, args.input_legend, args.output_legend)    
