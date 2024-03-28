@@ -1,5 +1,6 @@
 import random
 import argparse
+import gzip
 
 
 def get_args():
@@ -32,21 +33,23 @@ def get_args():
 def main():
     args = get_args()
     random.seed(args.seed)
-    with open(args.input_file) as f:
+    with gzip.open(args.input_file, 'rt') as f:
         line = f.readline()
         columns = line.split()
     size = len(columns)
     columnsToExtract = random.sample(range(0, size), args.num)
     otherColumns = [i for i in range(size) if i not in columnsToExtract]
     columnsToExtract.sort()
-    with open(f'{args.output_file}-sample', 'w') as s:
-        with open(f'{args.output_file}-remainder', 'w') as r:
-            for l in open(args.input_file):
-                cols = l.split()
-                sampleLine = [cols[i] for i in columnsToExtract]
-                remainderLine = [cols[i] for i in otherColumns]
-                s.write(" ".join(sampleLine) + "\n")
-                r.write(" ".join(remainderLine) + "\n")
+    with gzip.open(f'{args.output_file}-sample', 'wb') as s:
+        with gzip.open(f'{args.output_file}-remainder', 'wb') as r:
+            with gzip.open(args.input_file, 'rt') as input_haps:
+                for l in input_haps.readlines():
+                    cols = l.split()
+                    sampleLine = [cols[i] for i in columnsToExtract]
+                    remainderLine = [cols[i] for i in otherColumns]
+                    s.write((" ".join(sampleLine) + "\n").encode())
+                    r.write((" ".join(remainderLine) + "\n").encode())
 
 
-if __name__ == '__main__': main()
+if __name__ == '__main__':
+    main()
