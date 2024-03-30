@@ -64,7 +64,7 @@ def main():
             sys.exit("Legend files not provided")
 
         for i in range(M.num_rows()):
-            if M.row_num() == 0:
+            if M.row_num(i) == 0:
                 rows_of_zeros.append(i)
 
         bins = get_expected_bins(args, func_split, fun_only, syn_only)
