@@ -63,11 +63,11 @@ def get_args():
     parser.add_argument('--f_only',
                         dest='fun_bins_only',
                         help='Input expected bin sizes for only functional variants')
-    
+
     parser.add_argument('--s_only',
                         dest='syn_bins_only',
                         help='Input expected bin sizes for synonymous variants only')
-    
+
     parser.add_argument('-z',
                         action='store_true',
                         help='Rows of zeros are removed from input haps file')
@@ -91,7 +91,7 @@ def get_args():
 def prune_bins(bin_h, bins, R, M):
     for bin_id in reversed(range(len(bin_h))):
 
-	# The last bin contains those variants with ACs 
+	# The last bin contains those variants with ACs
 	# greater than the bin size, and we keep all of them
         if bin_id == len(bins):
             continue
@@ -148,7 +148,7 @@ def print_bin(bin_h, bins):
 def read_legend(legend_file_name):
     header = None
     legend = []
-    with open(legend_file_name) as f:
+    with open(legend_file_name, "r") as f:
         for l in f:
             A = l.rstrip().split()
 
@@ -181,7 +181,7 @@ def get_split(args):
     func_split = False
     fun_only = False
     syn_only = False
-    
+
     if args.exp_bins is None and not args.prob:
         if args.exp_fun_bins is not None \
             and args.exp_syn_bins is not None:
@@ -201,14 +201,14 @@ def verify_legend(legend, legend_header, M, split, probs):
         raise MissingColumn('If variants are split by functional/synonymous ' + \
                  'the legend file must have a column named "fun" ' + \
                  'that specifies "fun" or "syn" for each site')
-    
+
     if M.num_rows() != len(legend):
         raise DifferingLengths(f"Lengths of legend {len(legend)} and hap {M.num_rows()} files do not match")
 
     if probs and 'prob' not in legend_header:
         raise MissingProbs('The legend file needs to have a "prob" column ' + \
                 'to indicate the pruning probability of a given row ')
-    
+
 
 
 
@@ -237,7 +237,7 @@ def assign_bins(M, bins, legend, func_split, fun_only, syn_only):
 
             if bin_id not in target_map:
                 target_map[bin_id] = []
-                
+
 
             target_map[bin_id].append(row_i)
 
@@ -251,20 +251,21 @@ def write_legend(all_kept_rows, input_legend, output_legend):
     row_i = 0
     f = open(output_legend, 'w')
     r = open(f'{output_legend}-pruned-variants', 'w')
-    for l in open(input_legend):
-        if row_i == len(all_kept_rows):
-            break
-
-        if header == None:
-            f.write(l)
-            header = True
-        else:
-            if file_i == all_kept_rows[row_i]:
+    with open(input_legend, "r") as in_file:
+        for l in in_file.readlines():
+            if row_i == len(all_kept_rows):
+                break
+    
+            if header == None:
                 f.write(l)
-                row_i+=1
+                header = True
             else:
-                r.write(l)
-            file_i+=1
+                if file_i == all_kept_rows[row_i]:
+                    f.write(l)
+                    row_i+=1
+                else:
+                    r.write(l)
+                file_i+=1
 
 
 def write_hap(all_kept_rows, output_file, M):
@@ -299,7 +300,7 @@ def print_frequency_distribution(bins, bin_h, func_split, fun_only, syn_only):
         print('Functional')
         print_bin(bin_h['fun'], bins['fun'])
         print('\nSynonymous')
-        print_bin(bin_h['syn'], bins['syn'])   
+        print_bin(bin_h['syn'], bins['syn'])
     elif fun_only:
         print('Functional')
         print_bin(bin_h['fun'], bins)
@@ -341,7 +342,7 @@ def get_all_kept_rows(bin_h, R, func_split, fun_only, syn_only, keep_protected, 
             if int(legend[row_id]["protected"]) == 1:
                 keep_rows.append(row_id)
         all_kept_rows = list(merge(all_kept_rows, keep_rows))
-    
+
     all_kept_rows = list(dict.fromkeys(all_kept_rows))
     return all_kept_rows
 
