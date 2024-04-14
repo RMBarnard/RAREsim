@@ -99,9 +99,11 @@ def main():
         rows_of_zeros = set(rows_of_zeros)
         all_kept_rows = [x for x in all_kept_rows if x not in rows_of_zeros]
 
-        print()
-        print('Writing new variant legend')
-        write_legend(all_kept_rows, args.input_legend, args.output_legend)    
+        # No need to write a new legend when using the z flag as we are not removing rows
+        if not args.z:
+            print()
+            print('Writing new variant legend')
+            write_legend(all_kept_rows, args.input_legend, args.output_legend)
 
         print()
         print('Writing new haplotype file', end='', flush=True)
