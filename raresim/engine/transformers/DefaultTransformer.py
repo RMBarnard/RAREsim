@@ -86,17 +86,15 @@ class DefaultTransformer:
 
         all_kept_rows.sort()
 
-        R = sorted(R)
-
         if self.__runConfig.args.z:
-            all_kept_rows = list(merge(all_kept_rows, R))
+            all_kept_rows = [x for x in range(self.__matrix.num_rows())]
 
         if self.__runConfig.args.keep_protected:
             protected_rows = []
-            for row_id in R:
+            for row_id in sorted(R):
                 if int(self.__legend[row_id]["protected"]) == 1:
                     protected_rows.append(row_id)
-            all_kept_rows = list(merge(all_kept_rows, protected_rows))
+            all_kept_rows = set(merge(all_kept_rows, protected_rows))
 
         return set(all_kept_rows)
 

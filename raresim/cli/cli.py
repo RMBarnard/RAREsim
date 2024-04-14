@@ -162,7 +162,7 @@ def main():
     command = parseCommand()
     if command.command == 'sim':
         runConfig = RunConfig(command)
-        runner = DefaultRunner(runConfig)
+        runner: DefaultRunner = DefaultRunner(runConfig)
         runner.run()
 
     elif command.command == 'convert':

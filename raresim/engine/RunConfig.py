@@ -22,8 +22,6 @@ class RunConfig:
                 raise IllegalArgumentException('If variants are split by functional/synonymous ' +
                                                'files must be provided for --functional_bins ' +
                                                'and --synonymous_bins')
-        elif args.keep_protected:
-            return "protected_run"
         elif args.prob:
             return "probabilistic"
         else:
