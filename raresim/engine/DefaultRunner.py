@@ -9,10 +9,10 @@ import timeit
 
 class DefaultRunner:
     def __init__(self, runConfig: RunConfig):
-        self.matrix_reader = SparseMatrixReader()
-        self.matrix_writer = SparseMatrixWriter()
-        self.bins_reader = BinsReader()
-        self.legend_reader_writer = LegendReaderWriter()
+        self.matrix_reader = SparseMatrixReader.SparseMatrixReader()
+        self.matrix_writer = SparseMatrixWriter.SparseMatrixWriter()
+        self.bins_reader = BinsReader.BinsReader()
+        self.legend_reader_writer = LegendReaderWriter.LegendReaderWriter()
         self.args = runConfig.args
         self.runConfig = runConfig
 
@@ -30,19 +30,16 @@ class DefaultRunner:
         if self.args.input_legend is None or self.args.output_legend is None:
             raise IllegalArgumentException("Legend files not provided")
 
-        transformer = self.get_transformer()
-        transformer.run(bins, legend, matrix)
+        transformer = self.get_transformer(bins, legend, matrix)
+        transformer.run()
 
         print()
         print('Writing new variant legend')
         self.legend_reader_writer.write_legend(legend, self.args.output_legend)
 
         print()
-        print('Writing new haplotype file', end='', flush=True)
-        start = timeit.default_timer()
+        print('Writing new haplotype file')
         self.matrix_writer.writeToHapsFile(matrix, self.args.output_hap)
-        end = timeit.default_timer()
-        print(f"Took time: {end - start}")
 
     def get_bins(self):
         mode = self.runConfig.run_type
@@ -59,11 +56,11 @@ class DefaultRunner:
             bins = self.bins_reader.loadBins(self.args.exp_bins)
         return bins
 
-    def get_transformer(self):
+    def get_transformer(self, bins, legend, matrix):
         mode = self.runConfig.run_type
         print(f"Running with run mode: {mode}")
         if mode == "standard":
-            return DefaultTransformer(self.runConfig)
+            return DefaultTransformer.DefaultTransformer(self.runConfig, bins, legend, matrix)
         if mode == "func_split":
             return FunctionalSplitTransformer(self.runConfig, ["fun", "syn"])
         if mode == "fun_only":

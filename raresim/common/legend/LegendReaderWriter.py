@@ -15,9 +15,9 @@ class LegendReaderWriter:
             line = f.readline()
             header = line.rstrip().split()
             for key in header:
-                if key not in Legend.supported_columns:
+                if key not in Legend.Legend.supported_columns:
                     raise RaresimException(f"Legend column '{key}' is not supported. Supported keys are {Legend.supported_columns}")
-            legend = Legend(header)
+            legend = Legend.Legend(header)
 
             line = f.readline()
             while line and line.strip() != "\n" and line.strip() != '':

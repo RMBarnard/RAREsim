@@ -15,35 +15,32 @@ class SparseMatrixReader:
     def loadSparseMatrix(self, filepath: str) -> SparseMatrix:
         if not os.path.isfile(filepath):
             raise IllegalArgumentException(f"No such file exists: {filepath}")
+
+        ret = None
+        timer = timeit.default_timer()
         if filepath[-3:] == '.sm':
-            return self.__loadCompressed(filepath)
+            ret = self.__loadCompressed(filepath)
         elif filepath[-3:] == '.gz':
-            return self.__loadZipped(filepath)
-        return self.__loadUncompressed(filepath)
+            ret = self.__loadZipped(filepath)
+        else:
+            ret = self.__loadUncompressed(filepath)
+        print(f"Reading haps file took {timeit.default_timer() - timer} seconds")
+        return ret
 
     def __loadZipped(self, filepath: str) -> SparseMatrix:
-        with gzip.open(filepath, "rt") as f:
-            total = timeit.default_timer()
-            line = f.readline()
+        matrix = None
+        for line in gzip.open(filepath, "rt"):
+            if line is None or line.strip() == '':
+                break
             nums = self.compute(np.frombuffer(line[::2].encode('ascii'), np.uint8))
-            matrix = SparseMatrix.SparseMatrix(len(nums))
-            matrix.add_row(self.__getSparseRow(nums))
-            i = 1
+            if matrix is None:
+                matrix = SparseMatrix.SparseMatrix(len(nums))
+            row_to_add = self.__getSparseRow(nums)
+            matrix.add_row(row_to_add)
 
-            while True:
-                line = f.readline()
-                if line is None or line.strip() == "\n" or line.strip() == '':
-                    break
-                nums = self.compute(np.frombuffer(line[::2].encode('ascii'), np.uint8))
-                row_to_add = self.__getSparseRow(nums)
-                matrix.add_row(row_to_add)
-                i += 1
-
-        print(f"Total time = {timeit.default_timer() - total}")
         return matrix
 
     def __loadCompressed(self, filepath: str) -> SparseMatrix:
-        timer = timeit.default_timer()
         with open(filepath, "rb") as f:
             data = f.read(4)
             matrix = SparseMatrix(int.from_bytes(data, "little"))
@@ -56,21 +53,19 @@ class SparseMatrixReader:
                 else:
                     row.append(int.from_bytes(data, "little"))
                 data = f.read(4)
-        print(f"Read file in {timeit.default_timer() - timer}")
         return matrix
 
     def __loadUncompressed(self, filepath: str) -> SparseMatrix:
-        with open(filepath, "r") as f:
-            line = f.readline()
-            nums = self.compute(np.frombuffer(line.encode('ascii'), np.uint8))
-            matrix = SparseMatrix(len(nums))
-            matrix.add_row(self.__getSparseRow(nums))
-            while True:
-                line = f.readline()
-                if line is None or line.strip() == "\n" or line.strip() == '':
-                    break
-                nums = self.compute(np.frombuffer(line.encode('ascii'), np.uint8))
-                matrix.add_row(self.__getSparseRow(nums))
+        matrix = None
+        for line in open(filepath, "r"):
+            if line is None or line.strip() == '':
+                break
+            nums = self.compute(np.frombuffer(line[::2].encode('ascii'), np.uint8))
+            if matrix is None:
+                matrix = SparseMatrix.SparseMatrix(len(nums))
+            row_to_add = self.__getSparseRow(nums)
+            matrix.add_row(row_to_add)
+
         return matrix
 
     def __getSparseRow(self, nums: np.ndarray) -> list:

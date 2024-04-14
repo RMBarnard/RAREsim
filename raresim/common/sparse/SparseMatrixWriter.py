@@ -10,12 +10,14 @@ class SparseMatrixWriter:
         pass
 
     def writeToHapsFile(self, sparseMatrix: SparseMatrix, filename: str, compression="gz") -> None:
+        writeTimer = timeit.default_timer()
         if compression == "gz":
             self.__writeZipped(sparseMatrix, filename)
         elif compression == "sm":
             self.__writeCompressed(sparseMatrix, filename)
         else:
             self.__writeUncompressed(sparseMatrix, filename)
+        print(f"Writing haps file too {timeit.default_timer() - writeTimer} seconds")
 
     def __writeZipped(self, sparseMatrix: SparseMatrix, filename: str):
         """
@@ -25,17 +27,12 @@ class SparseMatrixWriter:
         @return: None
         """
         with gzip.open(filename, "wb") as f:
-            print(sparseMatrix.num_rows())
-            start = timeit.default_timer()
             for i in range(sparseMatrix.num_rows()):
                 row = ["0"]*sparseMatrix.num_cols()
                 for j in sparseMatrix.get_row_raw(i):
                     row[j] = "1"
                 line = " ".join(row) + "\n"
                 f.write(line.encode())
-                if i % 1000 == 0:
-                    print(timeit.default_timer() - start)
-                    start = timeit.default_timer()
 
     def __writeUncompressed(self, sparseMatrix: SparseMatrix, filename: str):
         """
@@ -46,8 +43,9 @@ class SparseMatrixWriter:
         """
         with open(filename, "w") as f:
             for i in range(sparseMatrix.num_rows()):
-                row = sparseMatrix.get_row(i)
-                row = [str(x) for x in row]
+                row = ["0"] * sparseMatrix.num_cols()
+                for j in sparseMatrix.get_row_raw(i):
+                    row[j] = "1"
                 line = " ".join(row) + "\n"
                 f.write(line)
 

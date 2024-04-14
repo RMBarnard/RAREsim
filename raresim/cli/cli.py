@@ -71,7 +71,6 @@ def parseCommand():
                              ' for but not pruned')
 
     args = parser.parse_args()
-    print("1")
 
     return args
 
@@ -161,8 +160,8 @@ def parseCommand():
 def main():
     command = parseCommand()
     if command.command == 'sim':
-        runConfig = RunConfig(command)
-        runner: DefaultRunner = DefaultRunner(runConfig)
+        runConfig = RunConfig.RunConfig(command)
+        runner: DefaultRunner = DefaultRunner.DefaultRunner(runConfig)
         runner.run()
 
     elif command.command == 'convert':
