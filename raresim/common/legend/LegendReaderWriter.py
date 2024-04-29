@@ -26,7 +26,7 @@ class LegendReaderWriter:
                 line = f.readline()
         return legend
 
-    def write_legend(self, legend: Legend, filepath: str) -> None:
+    def write_legend(self, legend: Legend, filepath: str, startingRows: int) -> None:
         with open(filepath, "w") as f:
             header_string = "\t".join(legend.get_header()) + "\n"
             f.write(header_string)

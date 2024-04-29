@@ -43,7 +43,7 @@ class SparseMatrixReader:
     def __loadCompressed(self, filepath: str) -> SparseMatrix:
         with open(filepath, "rb") as f:
             data = f.read(4)
-            matrix = SparseMatrix(int.from_bytes(data, "little"))
+            matrix = SparseMatrix.SparseMatrix(int.from_bytes(data, "little"))
             row = []
             data = f.read(4)
             while data:

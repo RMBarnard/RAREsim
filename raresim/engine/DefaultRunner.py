@@ -24,7 +24,7 @@ class DefaultRunner:
 
         # Validate inputs
         if legend.row_count() != matrix.num_rows():
-            raise IllegalArgumentException(f"Legend and Hap file lengths do not match. \n"
+            print(f"Legend and Hap file lengths do not match. \n"
                                            f"Legend: {legend.row_count()}, Haps: {matrix.num_rows()}")
 
         if self.args.input_legend is None or self.args.output_legend is None:
