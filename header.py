@@ -88,49 +88,69 @@ def get_args():
 
     return args
 
-def prune_bins(bin_h, bins, R, M):
-    for bin_id in reversed(range(len(bin_h))):
 
-	# The last bin contains those variants with ACs
-	# greater than the bin size, and we keep all of them
+
+
+def prune_bins(bin_assignments, bins, extra_rows, matrix):
+    '''
+    @param bin_assignments: A map of bin_id -> list of rows assigned to the bin
+    @param bins: the provided input bins with lower bound, upper bound, and expected count
+    @param extra_rows: list of rows that were removed and never re-added
+    @param matrix: sparse matrix of haps
+    '''
+    # Loop through the bins from largest to smallest
+    for bin_id in range(len(bin_assignments))[::-1]:
+        random.seed(1)
+        # If there are any rows with too many 1s for the largest bin, they get put into an extra bin,
+        # and we do not prune these alleles away
         if bin_id == len(bins):
             continue
 
+        # How many variants to we need and how many do we have
         need = bins[bin_id][2]
-        have = len(bin_h[bin_id])
+        have = len(bin_assignments[bin_id])
 
-        if abs(have - need) > 3:
-            p_rem = 1 - float(need)/float(have)
+        # If we have more rows in the bin than what we need, remove some rows
+        if have - need > 3:
+            # Calculate the probability to remove any given row in the bin
+            prob_remove = 1 - float(need) / float(have)
             row_ids_to_rem = []
             for i in range(have):
                 flip = random.uniform(0, 1)
-                if flip <= p_rem:
-                    row_ids_to_rem.append(bin_h[bin_id][i])
+                # If the row is 'chosen' for removal, remove it and add the row to the list of rows that may be used
+                # to make up for not having enough rows in later bins
+                if flip < prob_remove:
+                    row_id = bin_assignments[bin_id][i]
+                    # Add the ith row in the bin to the list of row ids to remove and the list of available
+                    # rows to pull from if needed later on
+                    row_ids_to_rem.append(row_id)
+                    extra_rows.append(row_id)
             for row_id in row_ids_to_rem:
-                R.append(row_id)
-                bin_h[bin_id].remove(row_id)
+                bin_assignments[bin_id].remove(row_id)
+
+        # If we don't have enough rows in the current bin, pull from the list of excess rows
         elif have < need - 3:
-            if R < need - have:
-                raise Exception('ERROR: ' + 'Current bin has ' + str(have) \
-                         + ' variant(s). Model needs ' + str(need) \
-                         + ' variant(s). Only ' + str(len(R)) + ' variant(s)' \
-                         + ' are avaiable')
+            if len(extra_rows) < abs(need - have):
+                raise Exception(f'ERROR: Current bin has {have} variants, but the model needs {need} variants '
+                                f'and only {len(extra_rows)} excess rows are available to use and prune down '
+                                f'from larger bins.')
 
-            p_add = float(need - have)/float(len(R))
-
+            # Calculate the probability to use any given row from the available list
+            prob_add = float(need - have) / float(len(extra_rows))
             row_ids_to_add = []
-            for i in range(len(R)):
+            for i in range(len(extra_rows)):
                 flip = random.uniform(0, 1)
-                if flip <= p_add:
-                    row_ids_to_add.append(R[i])
+                # If the current row is 'chosen' for use, we will prune it down to the desired number of variants
+                # and add it back in to the current bin and remove it from the list of available rows to pull from
+                if flip < prob_add:
+                    row_id = extra_rows[i]
+                    row_ids_to_add.append(row_id)
+                    num_to_keep = random.randint(bins[bin_id][0], bins[bin_id][1])
+                    num_to_rem = matrix.row_num(row_id) - num_to_keep
+                    matrix.prune_row(row_id, num_to_rem)
+                    bin_assignments[bin_id].append(row_id)
             for row_id in row_ids_to_add:
-                num_to_keep = int(random.uniform(bins[bin_id][0],\
-                                                 bins[bin_id][1]))
-                num_to_rem = M.row_num(row_id) - num_to_keep
-                left = M.prune_row(row_id, num_to_rem)
-                assert num_to_keep == left
-                bin_h[bin_id].append(row_id)
-                R.remove(row_id)
+                extra_rows.remove(row_id)
 
 
 def print_bin(bin_h, bins):
