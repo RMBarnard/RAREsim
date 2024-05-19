@@ -100,7 +100,7 @@ def main():
         all_kept_rows = [x for x in all_kept_rows if x not in rows_of_zeros]
 
         # No need to write a new legend when using the z flag as we are not removing rows
-        if not args.z:
+        if args.z:
             print()
             print('Writing new variant legend')
             write_legend(all_kept_rows, args.input_legend, args.output_legend)
