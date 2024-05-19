@@ -84,6 +84,16 @@ def get_args():
                         action='store_true',
                         help='Rows in the legend marked with a 1 in the protected column will be accounted for but not pruned')
 
+    parser.add_argument('--stop_threshold',
+                        dest='stop_threshold',
+                        default='20',
+                        help='Percentage threshold for the pruning process 0-100. Provides a stop to prevent us from going the given % below the expected count for any given bin during pruning. Default value of 20.')
+
+    parser.add_argument('--activation_threshold',
+                        dest='activation_threshold',
+                        default='10',
+                        help='Percentage threshold for activation of the pruning process. Requires that the actual count for a bin must be more than the given percentage different from the expected count to activate pruning on the bin.')
+    
     args = parser.parse_args()
 
     return args
