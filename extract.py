@@ -40,8 +40,9 @@ def main():
     columnsToExtract = random.sample(range(0, size), args.num)
     otherColumns = [i for i in range(size) if i not in columnsToExtract]
     columnsToExtract.sort()
-    with gzip.open(f'{args.output_file}-sample', 'wb') as s:
-        with gzip.open(f'{args.output_file}-remainder', 'wb') as r:
+    output_file_name = ".".split(args.output_file)[0]
+    with gzip.open(f'{output_file_name}-sample.gz', 'wb') as s:
+        with gzip.open(f'{output_file_name}-remainder.gz', 'wb') as r:
             with gzip.open(args.input_file, 'rt') as input_haps:
                 for l in input_haps.readlines():
                     cols = l.split()
