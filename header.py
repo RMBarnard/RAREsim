@@ -93,7 +93,7 @@ def get_args():
                         dest='activation_threshold',
                         default='10',
                         help='Percentage threshold for activation of the pruning process. Requires that the actual count for a bin must be more than the given percentage different from the expected count to activate pruning on the bin.')
-    
+
     args = parser.parse_args()
 
     return args
@@ -101,7 +101,7 @@ def get_args():
 
 
 
-def prune_bins(bin_assignments, bins, extra_rows, matrix):
+def prune_bins(bin_assignments, bins, extra_rows, matrix, activation_threshold, stopping_threshold):
     '''
     @param bin_assignments: A map of bin_id -> list of rows assigned to the bin
     @param bins: the provided input bins with lower bound, upper bound, and expected count
@@ -110,7 +110,6 @@ def prune_bins(bin_assignments, bins, extra_rows, matrix):
     '''
     # Loop through the bins from largest to smallest
     for bin_id in range(len(bin_assignments))[::-1]:
-        random.seed(1)
         # If there are any rows with too many 1s for the largest bin, they get put into an extra bin,
         # and we do not prune these alleles away
         if bin_id == len(bins):
@@ -120,12 +119,18 @@ def prune_bins(bin_assignments, bins, extra_rows, matrix):
         need = bins[bin_id][2]
         have = len(bin_assignments[bin_id])
 
+        activation = min([(float(activation_threshold)/100) * need, 10])
+        stop = (float(stopping_threshold)/100) * need
+
         # If we have more rows in the bin than what we need, remove some rows
-        if have - need > 3:
+        if have - need > activation:
             # Calculate the probability to remove any given row in the bin
             prob_remove = 1 - float(need) / float(have)
             row_ids_to_rem = []
             for i in range(have):
+                # If we hit our stopping threshold to stop the pruning process, then stop the pruning process
+                if have - len(row_ids_to_rem) <= need - stop:
+                    break
                 flip = random.uniform(0, 1)
                 # If the row is 'chosen' for removal, remove it and add the row to the list of rows that may be used
                 # to make up for not having enough rows in later bins
@@ -139,7 +144,7 @@ def prune_bins(bin_assignments, bins, extra_rows, matrix):
                 bin_assignments[bin_id].remove(row_id)
 
         # If we don't have enough rows in the current bin, pull from the list of excess rows
-        elif have < need - 3:
+        elif have < need - activation:
             if len(extra_rows) < abs(need - have):
                 raise Exception(f'ERROR: Current bin has {have} variants, but the model needs {need} variants '
                                 f'and only {len(extra_rows)} excess rows are available to use and prune down '
@@ -158,6 +163,8 @@ def prune_bins(bin_assignments, bins, extra_rows, matrix):
                     num_to_keep = random.randint(bins[bin_id][0], bins[bin_id][1])
                     num_to_rem = matrix.row_num(row_id) - num_to_keep
                     matrix.prune_row(row_id, num_to_rem)
+                    if matrix.row_num(row_id) != num_to_keep:
+                        print(f"WARNING: Requested to prune row {row_id} down to {num_to_keep} variants, but after the request the row still has {matrix.row_num} variants")
                     bin_assignments[bin_id].append(row_id)
             for row_id in row_ids_to_add:
                 extra_rows.remove(row_id)

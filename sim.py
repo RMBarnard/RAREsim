@@ -77,14 +77,14 @@ def main():
         try:
             if func_split:
                 R = {'fun':[], 'syn':[]}
-                prune_bins(bin_h['fun'], bins['fun'], R['fun'], M)
-                prune_bins(bin_h['syn'], bins['syn'], R['syn'], M)
+                prune_bins(bin_h['fun'], bins['fun'], R['fun'], M, args.activation_threshold, args.stop_threshold)
+                prune_bins(bin_h['syn'], bins['syn'], R['syn'], M, args.activation_threshold, args.stop_threshold)
             elif fun_only:
-                prune_bins(bin_h['fun'], bins, R, M)
+                prune_bins(bin_h['fun'], bins, R, M, args.activation_threshold, args.stop_threshold)
             elif syn_only:
-                prune_bins(bin_h['syn'], bins, R, M)
+                prune_bins(bin_h['syn'], bins, R, M, args.activation_threshold, args.stop_threshold)
             else:
-                prune_bins(bin_h, bins, R, M)
+                prune_bins(bin_h, bins, R, M, args.activation_threshold, args.stop_threshold)
         except Exception as e:
             sys.exit(str(e))
 
