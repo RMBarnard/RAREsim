@@ -13,25 +13,37 @@ class SparseMatrixReader:
         pass
 
     def loadSparseMatrix(self, filepath: str) -> SparseMatrix:
+        """
+        Loads a SparseMatrix object from the specified file. File format will be automatically determined based on file extension
+        @param filepath: File to read from
+        @return: A de-serialized SparseMatrix object obtained from the given file
+        """
         if not os.path.isfile(filepath):
             raise IllegalArgumentException(f"No such file exists: {filepath}")
-
-        ret = None
+        matrix = None
         timer = timeit.default_timer()
         if filepath[-3:] == '.sm':
-            ret = self.__loadCompressed(filepath)
+            matrix = self.__loadCompressed(filepath)
         elif filepath[-3:] == '.gz':
-            ret = self.__loadZipped(filepath)
+            matrix = self.__loadZipped(filepath)
         else:
-            ret = self.__loadUncompressed(filepath)
-        print(f"Reading haps file took {timeit.default_timer() - timer} seconds")
-        return ret
+            matrix = self.__loadUncompressed(filepath)
+        print(f"Reading haps file {filepath} took {timeit.default_timer() - timer} seconds")
+        return matrix
 
     def __loadZipped(self, filepath: str) -> SparseMatrix:
+        """
+        Loads a SparseMatrix object from the specified .gz file
+        @param filepath: File to read from
+        @return: a de-serialized SparseMatrix object obtained from the given file
+        """
         matrix = None
         for line in gzip.open(filepath, "rt"):
             if line is None or line.strip() == '':
                 break
+
+            # TODO: Finish benchmarking which of the following ways of obtaining `nums` is faster
+            # nums = np.fromstring(line, dtype=int, sep=" ")
             nums = self.compute(np.frombuffer(line[::2].encode('ascii'), np.uint8))
             if matrix is None:
                 matrix = SparseMatrix.SparseMatrix(len(nums))
@@ -41,39 +53,54 @@ class SparseMatrixReader:
         return matrix
 
     def __loadCompressed(self, filepath: str) -> SparseMatrix:
+        """
+        Loads a SparseMatrix object from the specified .sm file
+        @param filepath: File to read from
+        @return: a de-serialized SparseMatrix object obtained from the given file
+        """
         with open(filepath, "rb") as f:
-            data = f.read(4)
-            matrix = SparseMatrix.SparseMatrix(int.from_bytes(data, "little"))
-            row = []
-            data = f.read(4)
-            while data:
-                if self.__toSigned32(int.from_bytes(data, "little")) == -1:
-                    matrix.add_row(np.fromiter(row, dtype=int))
-                    row = []
-                else:
-                    row.append(int.from_bytes(data, "little"))
-                data = f.read(4)
+            rowCount = int.from_bytes(f.read(4), "little")
+            colCount = int.from_bytes(f.read(4), "little")
+            matrix = SparseMatrix.SparseMatrix(colCount)
+            cumulativeOnesPerRow = []
+            for _ in range(rowCount):
+                cumulativeOnesPerRow.append(int.from_bytes(f.read(4), "little"))
+
+            # TODO: Better variable naming here
+            i = 0
+            for r in cumulativeOnesPerRow:
+                row = []
+                for j in range(i, r):
+                    row.append(int.from_bytes(f.read(4), "little"))
+                i = r
+                matrix.add_row(np.fromiter(row, dtype=int))
+
         return matrix
 
     def __loadUncompressed(self, filepath: str) -> SparseMatrix:
-        matrix = None
-        for line in open(filepath, "r"):
-            if line is None or line.strip() == '':
-                break
-            nums = self.compute(np.frombuffer(line[::2].encode('ascii'), np.uint8))
-            if matrix is None:
-                matrix = SparseMatrix.SparseMatrix(len(nums))
-            row_to_add = self.__getSparseRow(nums)
-            matrix.add_row(row_to_add)
+        """
+        Loads a SparseMatrix object from the specified .haps file
+        @param filepath: File to read from
+        @return: a de-serialized SparseMatrix object obtained from the given file
+        """
+        with open(filepath, "r") as f:
+            matrix = None
+            for line in open(filepath, "r"):
+                if line is None or line.strip() == '':
+                    break
+                # TODO: Finish benchmarking which of the following ways of obtaining `nums` is faster
+                # nums = np.fromstring(line, dtype=int, sep=" ")
+                nums = self.compute(np.frombuffer(line[::2].encode('ascii'), np.uint8))
+                if matrix is None:
+                    matrix = SparseMatrix.SparseMatrix(len(nums))
+                row_to_add = self.__getSparseRow(nums)
+                matrix.add_row(row_to_add)
 
-        return matrix
+            return matrix
 
-    def __getSparseRow(self, nums: np.ndarray) -> list:
+    @staticmethod
+    def __getSparseRow(nums: np.ndarray) -> list:
         return np.where(nums == 1)[0]
-
-    def __toSigned32(self, n):
-        n = n & 0xffffffff
-        return n | (-(n & 0x80000000))
 
     @staticmethod
     @nb.njit(nb.int32[::1](nb.types.Array(nb.uint8, 1, 'C', readonly=True)))
