@@ -4,10 +4,15 @@ from raresim.engine import RunConfig
 from raresim.engine.transformers import *
 from raresim.common.exceptions import *
 from raresim.common import BinsReader
+from typing import Union
 import timeit
 
 
 class DefaultRunner:
+    """
+    The default runner handles all of the boilerplate and input validations and reading/writing of files before
+    calling the appropriate Transformer for the run type to perform data transformations
+    """
     def __init__(self, runConfig: RunConfig):
         self.matrix_reader = SparseMatrixReader.SparseMatrixReader()
         self.matrix_writer = SparseMatrixWriter.SparseMatrixWriter()
@@ -16,7 +21,16 @@ class DefaultRunner:
         self.args = runConfig.args
         self.runConfig = runConfig
 
-    def run(self):
+    def run(self) -> None:
+        """
+        Performs all three stages of the raresim "ETL"
+        E: Extract haplotype, legend, and bin data from provided files
+        T: Transform data via the pruning process based on extracted data from files
+        L: Load the transformed data into output files
+        @return: None
+        """
+        # Start our run timer
+        timer = timeit.default_timer()
         # Start with loading all the necessary data
         matrix: SparseMatrix = self.matrix_reader.loadSparseMatrix(self.args.sparse_matrix)
         legend: Legend = self.legend_reader_writer.load_legend(self.args.input_legend)
@@ -40,8 +54,13 @@ class DefaultRunner:
         print()
         print('Writing new haplotype file')
         self.matrix_writer.writeToHapsFile(matrix, self.args.output_hap)
+        print(f"Total runtime is {timeit.default_timer() - timer} seconds.")
 
-    def get_bins(self):
+    def get_bins(self) -> Union[list, dict]:
+        """
+        Loads the bins for the run depending on the run type.
+        @return: Either a list or a dict{variantType -> list} depending on run type
+        """
         mode = self.runConfig.run_type
         bins = None
         if mode == "func_split":
@@ -57,6 +76,13 @@ class DefaultRunner:
         return bins
 
     def get_transformer(self, bins, legend, matrix):
+        """
+        Gets the appropriate transformer for the given run configuration
+        @param bins: bins to be passed to the eventual transformer
+        @param legend: legend to be passed into the eventual transformer
+        @param matrix: matrix to be passed into the eventual transformer
+        @return: The appropriate transformer for the given run configuration
+        """
         mode = self.runConfig.run_type
         print(f"Running with run mode: {mode}")
         if mode == "standard":

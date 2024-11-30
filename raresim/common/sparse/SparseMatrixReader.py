@@ -104,15 +104,15 @@ class SparseMatrixReader:
 
     @staticmethod
     @nb.njit(nb.int32[::1](nb.types.Array(nb.uint8, 1, 'C', readonly=True)))
-    def compute(arr):
+    def compute(arr) -> np.ndarray:
         """
-            This method is not of my own design, but is the fastest possible way that I know of (without writing my own
-            C-based extension) to convert a long delimited string into a list of ints. I found this solution at
-            https://stackoverflow.com/questions/74873414/the-fastest-way-possible-to-split-a-long-string
+        This method is not of my own design, but is the fastest possible way that I know of (without writing my own
+        C-based extension) to convert a long delimited string into a list of ints. I found this solution at
+        https://stackoverflow.com/questions/74873414/the-fastest-way-possible-to-split-a-long-string
 
-            Due to this method being 'pre-compiled' by the numba just-in-time compiler, it cannot be debugged unless the
-            @nb.njit decorator line is commented out. This will cause a very noticable performance degradation, but will
-            allow for the placement of breakpoints in this method for debugging.
+        Due to this method being 'pre-compiled' by the numba just-in-time compiler, it cannot be debugged unless the
+        @nb.njit decorator line is commented out. This will cause a very noticable performance degradation, but will
+        allow for the placement of breakpoints in this method for debugging.
         """
         count = len(arr)
         res = np.empty(count, np.int32)

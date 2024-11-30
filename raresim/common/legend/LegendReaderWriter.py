@@ -7,7 +7,13 @@ class LegendReaderWriter:
     def __init__(self):
         pass
 
-    def load_legend(self, filepath: str) -> Legend:
+    @staticmethod
+    def load_legend(filepath: str) -> Legend:
+        """
+        Reads and deserializes a provided legend file and returns the deserialized Legend object
+        @param filepath: The file to read
+        @return: A Legend object obtained from the provided file
+        """
         if not os.path.isfile(filepath):
             raise IllegalArgumentException(f"No such file exists: {filepath}")
 
@@ -15,8 +21,8 @@ class LegendReaderWriter:
             line = f.readline()
             header = line.rstrip().split()
             for key in header:
-                if key not in Legend.Legend.supported_columns:
-                    raise RaresimException(f"Legend column '{key}' is not supported. Supported keys are {Legend.supported_columns}")
+                if key not in Legend.Legend.SUPPORTED_COLUMNS:
+                    raise RaresimException(f"Legend column '{key}' is not supported. Supported keys are {Legend.SUPPORTED_COLUMNS}")
             legend = Legend.Legend(header)
 
             line = f.readline()
@@ -26,7 +32,14 @@ class LegendReaderWriter:
                 line = f.readline()
         return legend
 
-    def write_legend(self, legend: Legend, filepath: str, startingRows: int) -> None:
+    @staticmethod
+    def write_legend(legend: Legend, filepath: str) -> None:
+        """
+        Writes the provided Legend object out to the provided file
+        @param legend: Legend object to serialize
+        @param filepath: Path to write the object to
+        @return: None
+        """
         with open(filepath, "w") as f:
             header_string = "\t".join(legend.get_header()) + "\n"
             f.write(header_string)

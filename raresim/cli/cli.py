@@ -169,7 +169,7 @@ def main():
         reader = SparseMatrixReader.SparseMatrixReader()
         writer = SparseMatrixWriter.SparseMatrixWriter()
         matrix = reader.loadSparseMatrix(args.input_file)
-        writer.writeToHapsFile(matrix, args.output_file, "sm")
+        writer.writeToHapsFile(matrix, args.output_file)
 
 
 if __name__ == '__main__':

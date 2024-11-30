@@ -1,5 +1,5 @@
 import argparse
-from raresim.common.sparse import *
+from raresim.common.sparse import SparseMatrixReader, SparseMatrixWriter
 
 
 def get_args():
@@ -13,7 +13,8 @@ def get_args():
     parser.add_argument('-o',
                         dest='output_file',
                         required=True,
-                        help='Output sparse matrix path')
+                        help='Output haplotype file path. Format will be specified by file extension. Use one of ['
+                             '.sm, .gz, .haps]')
 
     args = parser.parse_args()
 
@@ -25,7 +26,8 @@ def main():
     reader = SparseMatrixReader()
     writer = SparseMatrixWriter()
     matrix = reader.loadSparseMatrix(args.input_file)
-    writer.writeToHapsFile(matrix, args.output_file, "sm")
+    writer.writeToHapsFile(matrix, args.output_file)
+
 
 if __name__ == '__main__':
     main()

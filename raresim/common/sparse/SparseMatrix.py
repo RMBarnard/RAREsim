@@ -97,7 +97,6 @@ class SparseMatrix:
         """
         self.__data[row].remove(col)
 
-
     def add_row(self, val: list) -> None:
         """
         Sets row at given index to the provided list. Only to be used by SparseMatrixReader
@@ -156,7 +155,8 @@ class SparseMatrix:
 
         self.__data[row] = ret
 
-    def __reservoir_sample(self, k: int, n: int) -> list:
+    @staticmethod
+    def __reservoir_sample(k: int, n: int) -> list:
         """
         @param k: desired size of sample
         @param n: max size of any element + 1

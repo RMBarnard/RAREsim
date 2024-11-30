@@ -9,24 +9,24 @@ class SparseMatrixWriter:
     def __init__(self):
         pass
 
-    def writeToHapsFile(self, sparseMatrix: SparseMatrix, filename: str, compression="gz") -> None:
+    def writeToHapsFile(self, sparseMatrix: SparseMatrix, filename: str) -> None:
         """
-        Writes the sparse matrix to a file of the specified format
+        Writes the sparse matrix to a file of the format matching the file extension. Must be one of [.haps, .gz, .sm]
         @param sparseMatrix: input matrix
         @param filename: output file
-        @param compression: One of ["gz", "sm", "haps"]. Specifies the format to write the file to
         @return: None
         """
         writeTimer = timeit.default_timer()
-        if compression == "gz":
+        if filename.split(".")[-3:] == "gz":
             self.__writeZipped(sparseMatrix, filename)
-        elif compression == "sm":
+        elif filename.split(".")[-3:] == "sm":
             self.__writeCompressed(sparseMatrix, filename)
         else:
             self.__writeUncompressed(sparseMatrix, filename)
-        print(f"Writing haps file too {timeit.default_timer() - writeTimer} seconds")
+        print(f"Writing haps file took {timeit.default_timer() - writeTimer} seconds")
 
-    def __writeZipped(self, sparseMatrix: SparseMatrix, filename: str):
+    @staticmethod
+    def __writeZipped(sparseMatrix: SparseMatrix, filename: str):
         """
         Writes the sparse matrix to a g-zipped format. Unzipping will yield a human-readable file
         @param sparseMatrix: input matrix
@@ -41,7 +41,8 @@ class SparseMatrixWriter:
                 line = " ".join(row) + "\n"
                 f.write(line.encode())
 
-    def __writeUncompressed(self, sparseMatrix: SparseMatrix, filename: str):
+    @staticmethod
+    def __writeUncompressed(sparseMatrix: SparseMatrix, filename: str):
         """
         Writes the sparse matrix to an uncompressed human-readable format
         @param sparseMatrix: input matrix
@@ -56,7 +57,8 @@ class SparseMatrixWriter:
                 line = " ".join(row) + "\n"
                 f.write(line)
 
-    def __writeCompressed(self, sparseMatrix: SparseMatrix, filename: str) -> None:
+    @staticmethod
+    def __writeCompressed(sparseMatrix: SparseMatrix, filename: str) -> None:
         """
         Writes the sparse matrix to a binary encoded file.
         The format was not written by me (I would personally choose a different format), but I did reverse engineer it

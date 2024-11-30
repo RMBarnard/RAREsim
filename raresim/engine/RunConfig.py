@@ -2,6 +2,10 @@ from raresim.common.exceptions import *
 
 
 class RunConfig:
+    """
+    The RunConfig class represents an object that can be passed around that has all the important config data that
+    affects how we perform operations on any given run
+    """
     def __init__(self, args):
         self.run_type: str = self.__determine_run_type(args)
         self.keep_zeroed_rows: bool = args.z
@@ -9,7 +13,13 @@ class RunConfig:
         self.is_probabilistic: bool = args.prob
         self.args = args
 
-    def __determine_run_type(self, args) -> str:
+    @staticmethod
+    def __determine_run_type(args) -> str:
+        """
+        Calculates the type of run we are doing based on the given arguments
+        @param args: Cli arguments from the program
+        @return: String representing the run type
+        """
         if args.exp_bins is None and not args.prob:
             if args.exp_fun_bins is not None \
                     and args.exp_syn_bins is not None:

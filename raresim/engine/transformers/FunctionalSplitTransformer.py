@@ -5,13 +5,21 @@ from raresim.engine.transformers import DefaultTransformer
 
 
 class FunctionalSplitTransformer(DefaultTransformer.DefaultTransformer):
+    """
+    This transformer handles all func_split, fun_only, and syn_only data processing/transformation. It has a
+    functional/synonymous split specific version bin assignment. It uses the prune_bins function from
+    DefaultTransformer.py and just calls it on one of the types at a time
+    """
     def __init__(self, runConfig: RunConfig, bins, legend: Legend, matrix: SparseMatrix):
         super().__init__(runConfig, bins, legend, matrix)
 
-        # See TODO comment in assign_bins() method to understand usage of this class var
-        self.__currRow = None
-
     def run(self):
+        """
+        Runs all the data transformation operations that consider variant types
+        NOTE: This runner works via side effects. The matrix and legend objects that were originally passed
+        into this object's constructor will be modified.
+        @return: None
+        """
         bin_h = self.assign_bins()
         mode = self.__runConfig.getMode()
 
@@ -40,38 +48,45 @@ class FunctionalSplitTransformer(DefaultTransformer.DefaultTransformer):
             self.__legend.remove_row(rowId)
             self.__matrix.remove_row(rowId)
 
-    def get_all_kept_rows(self, bin_h, R):
+    def get_all_kept_rows(self, bin_assignments, extra_rows):
+        """
+        Returns all the rows that we are keeping in the matrix
+        @param bin_assignments: A map of bin_id -> list of rows assigned to the bin
+        @param extra_rows: list of rows that were removed and never re-added
+        @return: A set of all the row_ids that are being kept
+        """
         mode = self.__runConfig.getMode()
         all_kept_rows = []
         if mode == 'func_split':
-            for bin_id in range(len(bin_h['fun'])):
-                all_kept_rows += bin_h['fun'][bin_id]
-            for bin_id in range(len(bin_h['syn'])):
-                all_kept_rows += bin_h['syn'][bin_id]
+            for bin_id in range(len(bin_assignments['fun'])):
+                all_kept_rows += bin_assignments['fun'][bin_id]
+            for bin_id in range(len(bin_assignments['syn'])):
+                all_kept_rows += bin_assignments['syn'][bin_id]
 
         else:
-            for bin_id in bin_h['fun']:
-                all_kept_rows += bin_h['fun'][bin_id]
-            for bin_id in bin_h['syn']:
-                all_kept_rows += bin_h['syn'][bin_id]
+            for bin_id in bin_assignments['fun']:
+                all_kept_rows += bin_assignments['fun'][bin_id]
+            for bin_id in bin_assignments['syn']:
+                all_kept_rows += bin_assignments['syn'][bin_id]
 
         return set(sorted(all_kept_rows))
 
-    def assign_bins(self):
-        bin_h = {'fun': {}, 'syn': {}}
+    def assign_bins(self) -> dict:
+        """
+        Calculates which rows belong to which bin given the matrix and the bin definitions. This override of the
+        inherited method takes into account the variant type of each row
+        @return: A map of bin_id -> variantType -> rows assigned to the bin/variantType
+        """
+        bin_assignments = {'fun': {}, 'syn': {}}
 
         row_i = 0
         for row in range(self.__matrix.num_rows()):
             row_num = self.__matrix.row_num(row)
 
             if row_num > 0 or self.__runConfig.args.z:
-                # TODO: setting row_i to be a variable on the class is not a clean way of letting the get_bin()
-                #       method know what legend row to look at in the case that this is a true func_split run.
-                #       Low priority, but a better way of doing this could certainly be investigated.
-                self.__currRow = row_i
-                bin_id = self.get_bin(row_num)
+                bin_id = self.get_bin_func(row_num, row_i)
 
-                target_map = bin_h[self.__legend[row_i]['fun']]
+                target_map = bin_assignments[self.__legend[row_i]['fun']]
 
                 if bin_id not in target_map:
                     target_map[bin_id] = []
@@ -79,9 +94,15 @@ class FunctionalSplitTransformer(DefaultTransformer.DefaultTransformer):
                 target_map[bin_id].append(row_i)
 
             row_i += 1
-        return bin_h
+        return bin_assignments
 
-    def get_bin(self, val):
+    def get_bin_func(self, val: int, current_row: int) -> int:
+        """
+        Gets the id of the bin that the provided value belongs to
+        @param val: Value that you are requesting the bin_id for (to know if it is a functional or synonymous row)
+        @param current_row: id of the row that we are requesting a bin for
+        @return: The id of the bin that the provided value belongs to
+        """
         if self.__runConfig.getMode() == 'func_split':
             bins = self.__bins[self.__legend[self.__currRow]['fun']]
         else:
@@ -90,18 +111,3 @@ class FunctionalSplitTransformer(DefaultTransformer.DefaultTransformer):
             if bins[i][0] <= val <= bins[i][1]:
                 return i
         return len(bins)
-
-    def print_frequency_distribution(self, bin_h):
-        self.print_bin(bin_h)
-
-    def print_bin(self, bin_h):
-        for bin_id in range(len(bin_h)):
-            if bin_id < len(self.__bins):
-                print('[' + str(self.__bins[bin_id][0]) + ','
-                      + str(self.__bins[bin_id][1]) + ']\t'
-                      + str(self.__bins[bin_id][2]) + '\t'
-                      + str(len(bin_h[bin_id])))
-            else:
-                print('[' + str(self.__bins[bin_id - 1][1] + 1) + ', ]\t'
-                      + '\t'
-                      + str(len(bin_h[bin_id])))
