@@ -55,9 +55,9 @@ class testRaresim(unittest.TestCase):
         bins = read_expected('./testData/testBins.txt')
         random.seed(123)
         bin_h = bin_h = assign_bins(M, bins, legend, False, False, False)
-        prune_bins(bin_h, bins, [], M)
+        prune_bins(bin_h, bins, [], M, 10, 10)
         all_kept_rows = get_all_kept_rows(bin_h, [], False, False, False, False, None)
-        true_kept_rows = [0, 4, 5, 8, 9, 11, 12, 13, 15, 16, 17, 18, 19, 20, 21, 23, 25, 27, 28, 29, 30]
+        true_kept_rows = [0, 4, 5, 8, 9, 11, 12, 13, 15, 16, 17, 18, 19, 20, 21, 23, 24, 25, 26, 27, 28, 29, 30]
         self.assertEqual(all_kept_rows, true_kept_rows)
 
 
