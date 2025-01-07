@@ -25,7 +25,7 @@ def get_bin(bins, val):
     for i in range(len(bins)):
         if val >= bins[i][0] and val <= bins[i][1]:
             return i
-    return i+1
+    return i
 
 def get_args():
     parser = argparse.ArgumentParser()
@@ -170,17 +170,17 @@ def prune_bins(bin_assignments, bins, extra_rows, matrix, activation_threshold, 
                 extra_rows.remove(row_id)
 
 
-def print_bin(bin_h, bins):
-    for bin_id in range(len(bin_h)):
+def print_bin(bin_assignments, bins):
+    for bin_id in range(len(bin_assignments)):
         if bin_id < len(bins):
             print('[' + str(bins[bin_id][0]) + ',' \
             	  + str(bins[bin_id][1]) + ']\t' \
             	  + str(bins[bin_id][2]) + '\t' \
-		  + str(len(bin_h[bin_id])))
+		  + str(len(bin_assignments[bin_id])))
         else:
             print('[' + str(bins[bin_id-1][1]+1) + ', ]\t' \
             	  +  '\t' \
-		  + str(len(bin_h[bin_id])))
+		  + str(len(bin_assignments[bin_id])))
 
 def read_legend(legend_file_name):
     header = None
@@ -208,7 +208,7 @@ def read_expected(expected_file_name):
             if header == None:
                 header = A
             else:
-                bins.append( (int(A[0]), int(A[1]), float(A[2]) ) )
+                bins.append((int(A[0]), int(A[1]), float(A[2])))
 
     return bins
 
@@ -250,11 +250,11 @@ def verify_legend(legend, legend_header, M, split, probs):
 
 
 def assign_bins(M, bins, legend, func_split, fun_only, syn_only):
-    bin_h = {}
+    bin_assignments = {}
 
     if func_split or fun_only or syn_only:
-        bin_h['fun'] = {}
-        bin_h['syn'] = {}
+        bin_assignments['fun'] = {}
+        bin_assignments['syn'] = {}
 
     row_i = 0
     for row in range( M.num_rows()):
@@ -266,11 +266,11 @@ def assign_bins(M, bins, legend, func_split, fun_only, syn_only):
             else:
                 bin_id = get_bin(bins, row_num)
 
-            #Depending on split status, either append to bin_h or to just the annotated dictionary
-            target_map = bin_h
+            #Depending on split status, either append to bin_assignments or to just the annotated dictionary
+            target_map = bin_assignments
 
             if func_split or syn_only or fun_only:
-                target_map = bin_h[legend[row_i]['fun']]
+                target_map = bin_assignments[legend[row_i]['fun']]
 
             if bin_id not in target_map:
                 target_map[bin_id] = []
@@ -279,7 +279,8 @@ def assign_bins(M, bins, legend, func_split, fun_only, syn_only):
             target_map[bin_id].append(row_i)
 
         row_i += 1
-    return bin_h
+
+    return bin_assignments
 
 
 def write_legend(all_kept_rows, input_legend, output_legend):
@@ -332,40 +333,40 @@ def write_hap(all_kept_rows, output_file, M):
 
 
 
-def print_frequency_distribution(bins, bin_h, func_split, fun_only, syn_only):
+def print_frequency_distribution(bins, bin_assignments, func_split, fun_only, syn_only):
     if func_split:
         print('Functional')
-        print_bin(bin_h['fun'], bins['fun'])
+        print_bin(bin_assignments['fun'], bins['fun'])
         print('\nSynonymous')
-        print_bin(bin_h['syn'], bins['syn'])
+        print_bin(bin_assignments['syn'], bins['syn'])
     elif fun_only:
         print('Functional')
-        print_bin(bin_h['fun'], bins)
+        print_bin(bin_assignments['fun'], bins)
     elif syn_only:
         print('Synonymous')
-        print_bin(bin_h['syn'], bins)
+        print_bin(bin_assignments['syn'], bins)
     else:
-        print_bin(bin_h, bins)
+        print_bin(bin_assignments, bins)
 
 
-def get_all_kept_rows(bin_h, R, func_split, fun_only, syn_only, keep_protected, legend):
+def get_all_kept_rows(bin_assignments, R, func_split, fun_only, syn_only, keep_protected, legend):
     all_kept_rows = []
 
     if func_split:
-        for bin_id in range(len(bin_h['fun'])):
-            all_kept_rows += bin_h['fun'][bin_id]
-        for bin_id in range(len(bin_h['syn'])):
-            all_kept_rows += bin_h['syn'][bin_id]
+        for bin_id in range(len(bin_assignments['fun'])):
+            all_kept_rows += bin_assignments['fun'][bin_id]
+        for bin_id in range(len(bin_assignments['syn'])):
+            all_kept_rows += bin_assignments['syn'][bin_id]
 
     elif fun_only or syn_only:
-        for bin_id in bin_h['fun']:
-            all_kept_rows += bin_h['fun'][bin_id]
-        for bin_id in bin_h['syn']:
-            all_kept_rows += bin_h['syn'][bin_id]
+        for bin_id in bin_assignments['fun']:
+            all_kept_rows += bin_assignments['fun'][bin_id]
+        for bin_id in bin_assignments['syn']:
+            all_kept_rows += bin_assignments['syn'][bin_id]
 
     else:
-        for bin_id in range(len(bin_h)):
-            all_kept_rows += bin_h[bin_id]
+        for bin_id in range(len(bin_assignments)):
+            all_kept_rows += bin_assignments[bin_id]
 
     all_kept_rows.sort()
 
