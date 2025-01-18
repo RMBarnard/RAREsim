@@ -251,10 +251,16 @@ def verify_legend(legend, legend_header, M, split, probs):
 
 def assign_bins(M, bins, legend, func_split, fun_only, syn_only):
     bin_assignments = {}
+    print(M.num_rows())
+    # if func_split or fun_only or syn_only:
+    #     bin_assignments['fun'] = {}
+    #     bin_assignments['syn'] = {}
 
     if func_split or fun_only or syn_only:
-        bin_assignments['fun'] = {}
-        bin_assignments['syn'] = {}
+        bin_assignments['fun'] = {bin_id: [] for bin_id in range(len(bins['fun']))}
+        bin_assignments['syn'] = {bin_id: [] for bin_id in range(len(bins['syn']))}
+    else:
+        bin_assignments = {bin_id: [] for bin_id in range(len(bins))}
 
     row_i = 0
     for row in range( M.num_rows()):
@@ -262,6 +268,10 @@ def assign_bins(M, bins, legend, func_split, fun_only, syn_only):
 
         if row_num > 0:
             if func_split:
+                # print(row_num)
+                # print(legend[row_i])
+                # print(legend[row_i]['fun'])
+                # print(get_bin(bins[legend[row_i]['fun']], row_i))
                 bin_id = get_bin(bins[legend[row_i]['fun']], row_num)
             else:
                 bin_id = get_bin(bins, row_num)
@@ -279,6 +289,9 @@ def assign_bins(M, bins, legend, func_split, fun_only, syn_only):
             target_map[bin_id].append(row_i)
 
         row_i += 1
+
+    for bin in bin_assignments['fun']:
+        print(bin, type(bin))
 
     return bin_assignments
 

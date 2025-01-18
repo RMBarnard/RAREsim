@@ -1,6 +1,7 @@
 import random
 import argparse
 import gzip
+import os
 
 
 def get_args():
@@ -40,7 +41,8 @@ def main():
     columnsToExtract = random.sample(range(0, size), args.num)
     otherColumns = [i for i in range(size) if i not in columnsToExtract]
     columnsToExtract.sort()
-    output_file_name = ".gz".split(args.output_file)[0]
+    base, ext = os.path.splitext(args.output_file)
+    output_file_name = base
     with gzip.open(f'{output_file_name}-sample.gz', 'wb') as s:
         with gzip.open(f'{output_file_name}-remainder.gz', 'wb') as r:
             with gzip.open(args.input_file, 'rt') as input_haps:

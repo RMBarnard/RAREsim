@@ -60,7 +60,7 @@ def main():
     else:
         rows_of_zeros = []
 
-        if args.input_legend is None or (args.output_legend is None and not args.z):
+        if args.input_legend is None or (args.output_legend is None and args.z):
             sys.exit("Legend files not provided")
 
         for i in range(M.num_rows()):
