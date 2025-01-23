@@ -25,7 +25,7 @@ def get_bin(bins, val):
     for i in range(len(bins)):
         if val >= bins[i][0] and val <= bins[i][1]:
             return i
-    return i+1
+    return i
 
 def get_args():
     parser = argparse.ArgumentParser()
@@ -63,14 +63,14 @@ def get_args():
     parser.add_argument('--f_only',
                         dest='fun_bins_only',
                         help='Input expected bin sizes for only functional variants')
-    
+
     parser.add_argument('--s_only',
                         dest='syn_bins_only',
                         help='Input expected bin sizes for synonymous variants only')
-    
+
     parser.add_argument('-z',
                         action='store_true',
-                        help='Rows of zeros are not removed')
+                        help='Rows of zeros are removed from input haps file')
 
     parser.add_argument('-prob',
                         action='store_true',
@@ -84,71 +84,108 @@ def get_args():
                         action='store_true',
                         help='Rows in the legend marked with a 1 in the protected column will be accounted for but not pruned')
 
+    parser.add_argument('--stop_threshold',
+                        dest='stop_threshold',
+                        default='20',
+                        help='Percentage threshold for the pruning process 0-100. Provides a stop to prevent us from going the given % below the expected count for any given bin during pruning. Default value of 20.')
+
+    parser.add_argument('--activation_threshold',
+                        dest='activation_threshold',
+                        default='10',
+                        help='Percentage threshold for activation of the pruning process. Requires that the actual count for a bin must be more than the given percentage different from the expected count to activate pruning on the bin.')
+
     args = parser.parse_args()
 
     return args
 
-def prune_bins(bin_h, bins, R, M):
-    for bin_id in reversed(range(len(bin_h))):
 
-	# The last bin contains those variants with ACs 
-	# greater than the bin size, and we keep all of them
+
+
+def prune_bins(bin_assignments, bins, extra_rows, matrix, activation_threshold, stopping_threshold):
+    '''
+    @param bin_assignments: A map of bin_id -> list of rows assigned to the bin
+    @param bins: the provided input bins with lower bound, upper bound, and expected count
+    @param extra_rows: list of rows that were removed and never re-added
+    @param matrix: sparse matrix of haps
+    '''
+    # Loop through the bins from largest to smallest
+    for bin_id in range(len(bin_assignments))[::-1]:
+        # If there are any rows with too many 1s for the largest bin, they get put into an extra bin,
+        # and we do not prune these alleles away
         if bin_id == len(bins):
             continue
 
+        # How many variants to we need and how many do we have
         need = bins[bin_id][2]
-        have = len(bin_h[bin_id])
+        have = len(bin_assignments[bin_id])
 
-        if abs(have - need) > 3:
-            p_rem = 1 - float(need)/float(have)
+        activation = min([(float(activation_threshold)/100) * need, 10])
+        stop = (float(stopping_threshold)/100) * need
+
+        # If we have more rows in the bin than what we need, remove some rows
+        if have - need > activation:
+            # Calculate the probability to remove any given row in the bin
+            prob_remove = 1 - float(need) / float(have)
             row_ids_to_rem = []
             for i in range(have):
+                # If we hit our stopping threshold to stop the pruning process, then stop the pruning process
+                if have - len(row_ids_to_rem) <= need - stop:
+                    break
                 flip = random.uniform(0, 1)
-                if flip <= p_rem:
-                    row_ids_to_rem.append(bin_h[bin_id][i])
+                # If the row is 'chosen' for removal, remove it and add the row to the list of rows that may be used
+                # to make up for not having enough rows in later bins
+                if flip < prob_remove:
+                    row_id = bin_assignments[bin_id][i]
+                    # Add the ith row in the bin to the list of row ids to remove and the list of available
+                    # rows to pull from if needed later on
+                    row_ids_to_rem.append(row_id)
+                    extra_rows.append(row_id)
             for row_id in row_ids_to_rem:
-                R.append(row_id)
-                bin_h[bin_id].remove(row_id)
-        elif have < need - 3:
-            if R < need - have:
-                raise Exception('ERROR: ' + 'Current bin has ' + str(have) \
-                         + ' variant(s). Model needs ' + str(need) \
-                         + ' variant(s). Only ' + str(len(R)) + ' variant(s)' \
-                         + ' are avaiable')
+                bin_assignments[bin_id].remove(row_id)
 
-            p_add = float(need - have)/float(len(R))
+        # If we don't have enough rows in the current bin, pull from the list of excess rows
+        elif have < need - activation:
+            if len(extra_rows) < abs(need - have):
+                raise Exception(f'ERROR: Current bin has {have} variants, but the model needs {need} variants '
+                                f'and only {len(extra_rows)} excess rows are available to use and prune down '
+                                f'from larger bins.')
 
+            # Calculate the probability to use any given row from the available list
+            prob_add = float(need - have) / float(len(extra_rows))
             row_ids_to_add = []
-            for i in range(len(R)):
+            for i in range(len(extra_rows)):
                 flip = random.uniform(0, 1)
-                if flip <= p_add:
-                    row_ids_to_add.append(R[i])
+                # If the current row is 'chosen' for use, we will prune it down to the desired number of variants
+                # and add it back in to the current bin and remove it from the list of available rows to pull from
+                if flip < prob_add:
+                    row_id = extra_rows[i]
+                    row_ids_to_add.append(row_id)
+                    num_to_keep = random.randint(bins[bin_id][0], bins[bin_id][1])
+                    num_to_rem = matrix.row_num(row_id) - num_to_keep
+                    matrix.prune_row(row_id, num_to_rem)
+                    if matrix.row_num(row_id) != num_to_keep:
+                        print(f"WARNING: Requested to prune row {row_id} down to {num_to_keep} variants, but after the request the row still has {matrix.row_num} variants")
+                    bin_assignments[bin_id].append(row_id)
             for row_id in row_ids_to_add:
-                num_to_keep = int(random.uniform(bins[bin_id][0],\
-                                                 bins[bin_id][1]))
-                num_to_rem = M.row_num(row_id) - num_to_keep
-                left = M.prune_row(row_id, num_to_rem)
-                assert num_to_keep == left
-                bin_h[bin_id].append(row_id)
-                R.remove(row_id)
+                extra_rows.remove(row_id)
 
 
-def print_bin(bin_h, bins):
-    for bin_id in range(len(bin_h)):
+def print_bin(bin_assignments, bins):
+    for bin_id in range(len(bin_assignments)):
         if bin_id < len(bins):
             print('[' + str(bins[bin_id][0]) + ',' \
             	  + str(bins[bin_id][1]) + ']\t' \
             	  + str(bins[bin_id][2]) + '\t' \
-		  + str(len(bin_h[bin_id])))
+		  + str(len(bin_assignments[bin_id])))
         else:
             print('[' + str(bins[bin_id-1][1]+1) + ', ]\t' \
             	  +  '\t' \
-		  + str(len(bin_h[bin_id])))
+		  + str(len(bin_assignments[bin_id])))
 
 def read_legend(legend_file_name):
     header = None
     legend = []
-    with open(legend_file_name) as f:
+    with open(legend_file_name, "r") as f:
         for l in f:
             A = l.rstrip().split()
 
@@ -171,7 +208,7 @@ def read_expected(expected_file_name):
             if header == None:
                 header = A
             else:
-                bins.append( (int(A[0]), int(A[1]), float(A[2]) ) )
+                bins.append((int(A[0]), int(A[1]), float(A[2])))
 
     return bins
 
@@ -181,7 +218,7 @@ def get_split(args):
     func_split = False
     fun_only = False
     syn_only = False
-    
+
     if args.exp_bins is None and not args.prob:
         if args.exp_fun_bins is not None \
             and args.exp_syn_bins is not None:
@@ -201,50 +238,52 @@ def verify_legend(legend, legend_header, M, split, probs):
         raise MissingColumn('If variants are split by functional/synonymous ' + \
                  'the legend file must have a column named "fun" ' + \
                  'that specifies "fun" or "syn" for each site')
-    
+
     if M.num_rows() != len(legend):
         raise DifferingLengths(f"Lengths of legend {len(legend)} and hap {M.num_rows()} files do not match")
 
     if probs and 'prob' not in legend_header:
         raise MissingProbs('The legend file needs to have a "prob" column ' + \
                 'to indicate the pruning probability of a given row ')
-    
 
 
 
-def assign_bins(M, bins, legend, func_split, fun_only, syn_only, z):
-    bin_h = {}
 
-    func_split,fun_only,syn_only
+def assign_bins(M, bins, legend, func_split, fun_only, syn_only):
+    bin_assignments = {}
+    print(M.num_rows())
 
     if func_split or fun_only or syn_only:
-        bin_h['fun'] = {}
-        bin_h['syn'] = {}
+        bin_assignments['fun'] = {bin_id: [] for bin_id in range(len(bins['fun']))}
+        bin_assignments['syn'] = {bin_id: [] for bin_id in range(len(bins['syn']))}
+    else:
+        bin_assignments = {bin_id: [] for bin_id in range(len(bins))}
 
     row_i = 0
     for row in range( M.num_rows()):
         row_num = M.row_num(row)
 
-        if row_num > 0 or z:
+        if row_num > 0:
             if func_split:
                 bin_id = get_bin(bins[legend[row_i]['fun']], row_num)
             else:
                 bin_id = get_bin(bins, row_num)
 
-            #Depending on split status, either append to bin_h or to just the annotated dictionary
-            target_map = bin_h
+            #Depending on split status, either append to bin_assignments or to just the annotated dictionary
+            target_map = bin_assignments
 
             if func_split or syn_only or fun_only:
-                target_map = bin_h[legend[row_i]['fun']]
+                target_map = bin_assignments[legend[row_i]['fun']]
 
             if bin_id not in target_map:
                 target_map[bin_id] = []
-                
+
 
             target_map[bin_id].append(row_i)
 
         row_i += 1
-    return bin_h
+
+    return bin_assignments
 
 
 def write_legend(all_kept_rows, input_legend, output_legend):
@@ -253,20 +292,21 @@ def write_legend(all_kept_rows, input_legend, output_legend):
     row_i = 0
     f = open(output_legend, 'w')
     r = open(f'{output_legend}-pruned-variants', 'w')
-    for l in open(input_legend):
-        if row_i == len(all_kept_rows):
-            break
-
-        if header == None:
-            f.write(l)
-            header = True
-        else:
-            if file_i == all_kept_rows[row_i]:
+    with open(input_legend, "r") as in_file:
+        for l in in_file.readlines():
+            if row_i == len(all_kept_rows):
+                break
+    
+            if header == None:
                 f.write(l)
-                row_i+=1
+                header = True
             else:
-                r.write(l)
-            file_i+=1
+                if file_i == all_kept_rows[row_i]:
+                    f.write(l)
+                    row_i+=1
+                else:
+                    r.write(l)
+                file_i+=1
 
 
 def write_hap(all_kept_rows, output_file, M):
@@ -296,40 +336,40 @@ def write_hap(all_kept_rows, output_file, M):
 
 
 
-def print_frequency_distribution(bins, bin_h, func_split, fun_only, syn_only):
+def print_frequency_distribution(bins, bin_assignments, func_split, fun_only, syn_only):
     if func_split:
         print('Functional')
-        print_bin(bin_h['fun'], bins['fun'])
+        print_bin(bin_assignments['fun'], bins['fun'])
         print('\nSynonymous')
-        print_bin(bin_h['syn'], bins['syn'])   
+        print_bin(bin_assignments['syn'], bins['syn'])
     elif fun_only:
         print('Functional')
-        print_bin(bin_h['fun'], bins)
+        print_bin(bin_assignments['fun'], bins)
     elif syn_only:
         print('Synonymous')
-        print_bin(bin_h['syn'], bins)
+        print_bin(bin_assignments['syn'], bins)
     else:
-        print_bin(bin_h, bins)
+        print_bin(bin_assignments, bins)
 
 
-def get_all_kept_rows(bin_h, R, func_split, fun_only, syn_only, z, keep_protected, legend):
+def get_all_kept_rows(bin_assignments, R, func_split, fun_only, syn_only, keep_protected, legend):
     all_kept_rows = []
 
     if func_split:
-        for bin_id in range(len(bin_h['fun'])):
-            all_kept_rows += bin_h['fun'][bin_id]
-        for bin_id in range(len(bin_h['syn'])):
-            all_kept_rows += bin_h['syn'][bin_id]
+        for bin_id in range(len(bin_assignments['fun'])):
+            all_kept_rows += bin_assignments['fun'][bin_id]
+        for bin_id in range(len(bin_assignments['syn'])):
+            all_kept_rows += bin_assignments['syn'][bin_id]
 
     elif fun_only or syn_only:
-        for bin_id in bin_h['fun']:
-            all_kept_rows += bin_h['fun'][bin_id]
-        for bin_id in bin_h['syn']:
-            all_kept_rows += bin_h['syn'][bin_id]
+        for bin_id in bin_assignments['fun']:
+            all_kept_rows += bin_assignments['fun'][bin_id]
+        for bin_id in bin_assignments['syn']:
+            all_kept_rows += bin_assignments['syn'][bin_id]
 
     else:
-        for bin_id in range(len(bin_h)):
-            all_kept_rows += bin_h[bin_id]
+        for bin_id in range(len(bin_assignments)):
+            all_kept_rows += bin_assignments[bin_id]
 
     all_kept_rows.sort()
 
@@ -337,15 +377,13 @@ def get_all_kept_rows(bin_h, R, func_split, fun_only, syn_only, z, keep_protecte
         R = [item for sublist in R.values() for item in sublist]
     R = sorted(R)
 
-    if z:
-        all_kept_rows = list(merge(all_kept_rows, R))
     if keep_protected:
         keep_rows = []
         for row_id in R:
             if int(legend[row_id]["protected"]) == 1:
                 keep_rows.append(row_id)
         all_kept_rows = list(merge(all_kept_rows, keep_rows))
-    
+
     all_kept_rows = list(dict.fromkeys(all_kept_rows))
     return all_kept_rows
 
